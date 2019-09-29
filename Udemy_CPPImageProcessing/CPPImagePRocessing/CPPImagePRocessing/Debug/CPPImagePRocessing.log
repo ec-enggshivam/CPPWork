@@ -1,0 +1,8 @@
+﻿  CPPImagePRocessing.cpp
+C:\Users\shivam\source\repos\Udemy_CPPImageProcessing\CPPImagePRocessing\CPPImagePRocessing\CPPImagePRocessing.cpp(10,55): error C2660:  'fopen_s': function does not take 2 arguments
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(97,34): message :  see declaration of 'fopen_s'
+C:\Users\shivam\source\repos\Udemy_CPPImageProcessing\CPPImagePRocessing\CPPImagePRocessing\CPPImagePRocessing.cpp(11,54): error C2660:  'fopen_s': function does not take 2 arguments
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(97,34): message :  see declaration of 'fopen_s'
+C:\Users\shivam\source\repos\Udemy_CPPImageProcessing\CPPImagePRocessing\CPPImagePRocessing\CPPImagePRocessing.cpp(37,28): error C2131:  expression did not evaluate to a constant
+C:\Users\shivam\source\repos\Udemy_CPPImageProcessing\CPPImagePRocessing\CPPImagePRocessing\CPPImagePRocessing.cpp(37,21): message :  failure was caused by a read of a variable outside its lifetime
+C:\Users\shivam\source\repos\Udemy_CPPImageProcessing\CPPImagePRocessing\CPPImagePRocessing\CPPImagePRocessing.cpp(37,21): message :  see usage of 'height'

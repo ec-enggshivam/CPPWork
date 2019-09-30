@@ -16,8 +16,21 @@ duckBilledP.Mammal::Animal::Age = 25;
 duckBilledP.Bird::Animal::Age = 25;
 duckBilledP.Reptile::Animal::Age = 25;
 Clearly, one duck-billed platypus should have only one Age. Yet, you want class
-Platypus to be a Mammal, Bird, and Reptile. The solution is in virtual inheritance.*/
-
+<<<<<<< HEAD
+Platypus to be a Mammal, Bird, and Reptile. The solution is in virtual inheritance.
+If you expect a derived class to be used as a base class, it possibly is a good idea
+to define its relationship to the base using the keyword virtual:
+class Derived1: public virtual Base
+{
+// ... members and functions
+};
+class Derived2: public virtual Base
+{
+// ... members and functions
+};
+*/
+/*Problem code
+=======
 class Animal{
   public:
     Animal(){
@@ -47,6 +60,40 @@ int main() {
 
     //The below line will give compilation error
     //duckbilledP.age = 25;
+
+    return 0;
+}
+*/
+
+//working code
+class Animal{
+  public:
+    Animal(){
+        cout<<"animal constructor"<<endl;
+    }
+    int age;
+};
+
+class mammal:public virtual Animal{
+};
+
+class bird:public virtual Animal{
+};
+
+class reptile:public virtual Animal{
+};
+
+class platypus:public mammal, public bird, public reptile{
+  public:
+   platypus(){
+       cout<<"platypus constructor";
+   }
+};
+
+int main() {
+    platypus duckbilledP;
+
+    duckbilledP.age = 25;
 
     return 0;
 }

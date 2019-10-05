@@ -44,39 +44,39 @@ object SayHello that was not destructed successfully.
   }
 
  	// Destructor
- 	~MyString()
-	{
- 	cout << "Invoking destructor, clearing up" << endl;
- 	if (Buffer != NULL)
- 	delete [] Buffer;
- 	}
+   ~MyString()
+   {
+ 	 cout << "Invoking destructor, clearing up" << endl;
+ 	 if (Buffer != NULL)
+ 	 delete [] Buffer;
+   }
 
- 	int GetLength()
- 	{
- 	return strlen(Buffer);
- 	}
+    int GetLength()
+   {
+ 	 return strlen(Buffer);
+   }
 
  	const char* GetString()
- 	{
+   {
  	return Buffer;
- 	}
+   }
 };
 
- void UseMyString(MyString Input)
- {
+void UseMyString(MyString Input)
+{
 	cout << "String buffer in MyString is" << Input.GetLength();
  	cout << " characters long" << endl;
  
 	cout << "Buffer contains: " << Input.GetString() << endl;
  	return;
- }
+}
 
- int main()
- {
- 	MyString SayHello("Hello from String Class");
+int main()
+{
+  MyString SayHello("Hello from String Class");
 
  	// Pass SayHello as a parameter to the function
- 	UseMyString(SayHello);
+  UseMyString(SayHello);
 
- 	return 0;
- }
+  return 0;
+}

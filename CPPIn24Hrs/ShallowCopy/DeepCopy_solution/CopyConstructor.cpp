@@ -9,15 +9,15 @@ The copy constructor is a special overloaded constructor that you as the program
 the class need to supply. The compiler guarantees invocation of the copy constructor
 every time an object of the class is copied, and this includes passing an object to a function
 by value.
-NOTE
+NOTE:
 The declaration syntax of a copy constructor for class MyString is the following:
 class MyString
 {
-MyString(const MyString& CopySource); // copy constructor
+	MyString(const MyString& CopySource); // copy constructor
 };
 MyString::MyString(const MyString& CopySource)
 {
-// Copy constructor implementation code
+	// Copy constructor implementation code
 }
 Thus, a copy constructor takes an object of the same class by reference as a parameter.
 This parameter is an alias of the source object and is the handle you have in writing your
@@ -50,20 +50,20 @@ custom copy code (where you would ensure a deep copy of all buffers in the sourc
  	{
  	  cout << "Copy constructor: copying from MyString" << endl;
 
- 	if(CopySource.Buffer != NULL)
- 	{	
- 	  // ensure deep copy by first allocating own buffer
- 	  Buffer = new char [strlen(CopySource.Buffer) + 1];
+ 	  if(CopySource.Buffer != NULL)
+ 	  {	
+ 	  	// ensure deep copy by first allocating own buffer
+ 	  	Buffer = new char [strlen(CopySource.Buffer) + 1];
 
- 	  // copy from the source into local buffer
- 	  strcpy(Buffer, CopySource.Buffer);
+ 	  	// copy from the source into local buffer
+ 	  	strcpy(Buffer, CopySource.Buffer);
 
- 	 // Display memory address pointed by local buffer
- 	 cout << "Buffer points to: 0x" << hex;
- 	 cout << (unsigned int*)Buffer << endl;
-    }
- 	else
- 	Buffer = NULL;
+ 	 	// Display memory address pointed by local buffer
+ 	 	cout << "Buffer points to: 0x" << hex;
+ 	 	cout << (unsigned int*)Buffer << endl;
+      }
+ 	  else
+ 		Buffer = NULL;
  	}
 
  	// Destructor

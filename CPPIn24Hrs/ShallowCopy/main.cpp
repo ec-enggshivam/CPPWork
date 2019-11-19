@@ -36,19 +36,19 @@ object SayHello that was not destructed successfully.
   {
     if(InitialInput != NULL)
     {
-	  Buffer = new char [strlen(InitialInput) + 1];
- 	  strcpy(Buffer, InitialInput);
+      Buffer = new char [strlen(InitialInput) + 1];
+      strcpy(Buffer, InitialInput);
     }
-	else
-	Buffer = NULL;
+    else
+      Buffer = NULL;
   }
 
  	// Destructor
    ~MyString()
    {
- 	 cout << "Invoking destructor, clearing up" << endl;
- 	 if (Buffer != NULL)
- 	 delete [] Buffer;
+     cout << "Invoking destructor, clearing up" << endl;
+     if (Buffer != NULL)
+     delete [] Buffer;
    }
 
     int GetLength()

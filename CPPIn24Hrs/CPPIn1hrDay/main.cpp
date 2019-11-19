@@ -1,35 +1,37 @@
 #include <iostream>
- #include <sstream> // new include for ostringstream
- #include <string>
- using namespace std;
+#include <sstream> // new include for ostringstream
+#include <string>
 
- class Date
- {
- private:
- int day, month, year;
- string dateInString;
+using namespace std;
 
- public:
- Date(int inMonth, int inDay, int inYear)
- : month(inMonth), day(inDay), year(inYear) {};
+class Date {
+  private:
+    int day, month, year;
+    string dateInString;
 
-operator const char*()
-{
- ostringstream formattedDate; // assists string construction
- formattedDate << month << " / " << day << " / " << year;
+  public:
+    Date(int inMonth, int inDay, int inYear) :
+        month(inMonth), day(inDay), year(inYear)
+    {
+    };
 
- dateInString = formattedDate.str();
-return dateInString.c_str();
-}
+  operator const char*()
+  {
+    ostringstream formattedDate; // assists string construction
+    formattedDate << month << " / " << day << " / " << year;
+
+    dateInString = formattedDate.str();
+    return dateInString.c_str();
+  }
 };
 
-int main ()
+int main()
 {
-Date Holiday (12, 25, 2016);
-cout << "Holiday is on: " << Holiday << endl;
+  Date Holiday(12, 25, 2016);
+  cout << "Holiday is on: " << Holiday << endl;
 
- // string strHoliday (Holiday); // OK!
- // strHoliday = Date(11, 11, 2016); // also OK!
+  // string strHoliday (Holiday); // OK!
+  // strHoliday = Date(11, 11, 2016); // also OK!
 
- return 0;
+  return 0;
 }

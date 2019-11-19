@@ -1,17 +1,3 @@
-// ImplementingInheritance.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
-
-
 /*C++ Syntax of Derivation:
 ---------------------------
 How would you inherit class Carp from class Fish, or in general a
@@ -46,33 +32,52 @@ class Fish
 	  bool isFreshWaterFish;
   
   public:
+  	//constructor for method 2
+  	Fish(bool _isFreshWaterFish):isFreshWaterFish(_isFreshWaterFish){
+		}
+		
 	  void swim()
 	  {
 		  if (isFreshWaterFish)
 		    cout << "Swims in Lake"<<endl;
 		  
 		  else
-			cout << "Swims in Sea"<<endl;
-      }
-
-
+			  cout << "Swims in Sea"<<endl;
+    }
 };
 
+/*
+Method 1 to pass value to base class, will work with the default constructor supplied by the compiler
 class Tuna:public Fish
 {
   public:
-	  Tuna() 
-	  {
+	  Tuna(){
 		  isFreshWaterFish = false;
-	  }
+		} ////setting the variable in base class as it is protected, so accessible in derived class
 };
 
 class Carp :public Fish
 {
   public:
-	  Carp() {
-		  isFreshWaterFish = true;
-	  }
+	  Carp(){
+			isFreshWaterFish = true;
+		} //setting the variable in base class as it is protected, so accessible in derived class
+};
+
+*/
+
+//Method 2: passing values by intializations lists, needs a constructor to be
+//implemented with parameter as the initialization is passing parameter
+class Tuna:public Fish
+{
+  public:
+	  Tuna():Fish(false){} //passing parameter value to base class from the derived class
+};
+
+class Carp :public Fish
+{
+  public:
+	  Carp():Fish(true){} //passing parameter value to base class again from derived class
 };
 
 

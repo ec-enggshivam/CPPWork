@@ -2,8 +2,6 @@
 #include <string>
 
 using namespace std;
-/* run this program using the console pauser or add your own getch, 
- system("pause") or input loop */
 
 class test {
     string name;
@@ -25,7 +23,7 @@ int main(int argc, char **argv) {
 
   test test2("vini", 25);
 
-  test2 = test1;
+  test2 = test1; //shallow copying as no copy constructor is there
 
   test2.print();
 

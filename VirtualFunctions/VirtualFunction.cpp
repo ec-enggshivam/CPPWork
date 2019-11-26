@@ -13,15 +13,14 @@ class A{
 
 //Derived class
 class B:public A{
-	
 	public:
 	void display(){
 		cout<<"In derived clas"<<endl;
 	}
 	
-	/*void display2(){
+	void display2(){
 		cout<<"In function display2 of derived class"<<endl;
-	}*/
+	}
 };
 
 void show(A& objA){
@@ -34,8 +33,7 @@ int main(int argc, char** argv) {
 	A *ptrObjA;
 	
 	ptrObjA = &objB;
-	//show(objB);
-	//ptrObjA->display2();
-	
+	show(objB);
+	ptrObjA->display2();
 	return 0;
 }

@@ -223,7 +223,6 @@ delay_loop:
 	SWPB	r1, r1, [r2]			/* Drain write-buffer */
 
 	/* Flush, (i.e. invalidate) all entries in the ID-cache */
-
 	MCR	CP_MMU, 0, r1, c7, c0, 0	/* Flush (inval) all ID-cache */
 #endif /* defined(CPU_720T,740T) */
 

@@ -127,6 +127,9 @@
 #endif
 
 #define CPU_FAMILY (ARM)
+
+//#define ROM_RESIDENT 1
+
 /*
  * If memory is to be cleared, it will be cleared from SYS_MEM_BOTTOM
  * up to (but not including) SYS_MEM_TOP, except for text and data segments.
@@ -209,15 +212,15 @@ int checkLongs(FAST UINT *source, FAST UINT *destination, UINT nlongs);
 
 void romStart(FAST int startType /* start type */)
 {
-#if ((CPU_FAMILY==SPARC) || (CPU_FAMILY==MIPS) || (CPU_FAMILY==I80X86) || \
+  #if ((CPU_FAMILY==SPARC) || (CPU_FAMILY==MIPS) || (CPU_FAMILY==I80X86) || \
      (CPU_FAMILY==PPC) || (CPU_FAMILY==ARM))
   volatile/* to force absolute adressing */
-#endif /* (CPU_FAMILY==SPARC) */
+  #endif /* (CPU_FAMILY==SPARC) */
   FUNCPTR absEntry; /* to avoid PC Relative Jump Subroutine */
-#if (CPU_FAMILY==ARM) && (!defined(ROM_RESIDENT)) && !defined(BOOTCODE_IN_RAM)
-  VOIDFUNCPTR ramfillLongs = fillLongs; /* force call to RAM */
-#define fillLongs(a,b,c) ramfillLongs(a,b,c)
-#endif  /* (CPU_FAMILY==ARM) */
+  #if (CPU_FAMILY==ARM) && (!defined(ROM_RESIDENT)) && !defined(BOOTCODE_IN_RAM)
+    VOIDFUNCPTR ramfillLongs = fillLongs; /* force call to RAM */
+  #define fillLongs(a,b,c) ramfillLongs(a,b,c)
+  #endif  /* (CPU_FAMILY==ARM) */
 //#if (CPU_FAMILY==MC680X0) && !defined(ROM_RESIDENT) && !defined(BOOTCODE_IN_RAM)
 //  volatile VOIDFUNCPTR romcopyLongs = ©Longs; /* force call to ROM */
 //#define copyLongs romcopyLongs
@@ -228,79 +231,77 @@ void romStart(FAST int startType /* start type */)
    * appearing last in DATA segment.
    */
 
-#ifdef ROM_RESIDENT
+  #ifdef ROM_RESIDENT
   /* If ROM resident code, then copy only data segment
    * from ROM to RAM, initialize memory and jump
    * to usrInit.
    */
+  #if  0 //(CPU_FAMILY == SPARC)
+    copyLongs ((UINT *)(etext + 8), (UINT *) RESIDENT_DATA,
+  #else
+    copyLongs ((UINT *)etext, (UINT *) RESIDENT_DATA,
+  #endif
+    ((UINT) wrs_kernel_data_end - (UINT) RESIDENT_DATA) / sizeof (long));
 
-#if  0 //(CPU_FAMILY == SPARC)
-  copyLongs ((UINT *)(etext + 8), (UINT *) RESIDENT_DATA,
-#else
-  copyLongs ((UINT *)etext, (UINT *) RESIDENT_DATA,
-#endif
-  ((UINT) wrs_kernel_data_end - (UINT) RESIDENT_DATA) / sizeof (long));
+  #else   /* ROM_RESIDENT */
 
-#else   /* ROM_RESIDENT */
+  #ifdef UNCOMPRESS
 
-#ifdef UNCOMPRESS
+  #if 0//(CPU_FAMILY == MIPS)
+    /*
+     * copy text to uncached locations to avoid problems with
+     * copy back caches
+     */
+    ((FUNCPTR)ROM_OFFSET(copyLongs)) (ROM_TEXT_ADRS, (UINT)K0_TO_K1(romInit),
+        ROM_COPY_SIZE / sizeof (long));
+  #else   /* CPU_FAMILY == MIPS */
+    ((FUNCPTR)ROM_OFFSET(copyLongs)) (ROM_TEXT_ADRS, (UINT)romInit,
+        ROM_COPY_SIZE / sizeof (long));
+  #endif  /* CPU_FAMILY == MIPS */
 
-#if 0//(CPU_FAMILY == MIPS)
-  /*
-   * copy text to uncached locations to avoid problems with
-   * copy back caches
-   */
-  ((FUNCPTR)ROM_OFFSET(copyLongs)) (ROM_TEXT_ADRS, (UINT)K0_TO_K1(romInit),
-      ROM_COPY_SIZE / sizeof (long));
-#else   /* CPU_FAMILY == MIPS */
-  ((FUNCPTR)ROM_OFFSET(copyLongs)) (ROM_TEXT_ADRS, (UINT)romInit,
-      ROM_COPY_SIZE / sizeof (long));
-#endif  /* CPU_FAMILY == MIPS */
+  #else   /* UNCOMPRESS */
 
-#else   /* UNCOMPRESS */
+  #if 0//(CPU_FAMILY == MIPS)
+    /*
+     * copy text to uncached locations to avoid problems with
+     * copy back caches
+     * copy the entire data segment because there is no way to ensure that
+     * binArray is the last thing in the data segment because of GP relative
+     * addressing
+     */
+    ((FUNCPTR) ROM_OFFSET(copyLongs))(ROM_TEXT_ADRS, (UINT) K0_TO_K1(romInit),
+        ((UINT) wrs_kernel_data_end - (UINT) romInit) / sizeof(long));
+  #else   /* CPU_FAMILY == MIPS */
+    ((FUNCPTR)ROM_OFFSET(copyLongs)) (ROM_TEXT_ADRS, (UINT)romInit,
+        ((UINT)binArrayStart - (UINT)romInit)/ sizeof (long));
 
-#if 0//(CPU_FAMILY == MIPS)
-  /*
-   * copy text to uncached locations to avoid problems with
-   * copy back caches
-   * copy the entire data segment because there is no way to ensure that
-   * binArray is the last thing in the data segment because of GP relative
-   * addressing
-   */
-  ((FUNCPTR) ROM_OFFSET(copyLongs))(ROM_TEXT_ADRS, (UINT) K0_TO_K1(romInit),
-      ((UINT) wrs_kernel_data_end - (UINT) romInit) / sizeof(long));
-#else   /* CPU_FAMILY == MIPS */
-  ((FUNCPTR)ROM_OFFSET(copyLongs)) (ROM_TEXT_ADRS, (UINT)romInit,
-      ((UINT)binArrayStart - (UINT)romInit)/ sizeof (long));
+    ((FUNCPTR)ROM_OFFSET(copyLongs))
+    ((UINT *)((UINT)ROM_TEXT_ADRS + ((UINT)BINARRAYEND_ROUNDOFF -
+                (UINT)romInit)), (UINT *)BINARRAYEND_ROUNDOFF,
+        ((UINT)wrs_kernel_data_end - (UINT)binArrayEnd) / sizeof (long));
 
-  ((FUNCPTR)ROM_OFFSET(copyLongs))
-  ((UINT *)((UINT)ROM_TEXT_ADRS + ((UINT)BINARRAYEND_ROUNDOFF -
-              (UINT)romInit)), (UINT *)BINARRAYEND_ROUNDOFF,
-      ((UINT)wrs_kernel_data_end - (UINT)binArrayEnd) / sizeof (long));
+  #if 0//(CPU==XSCALE)
+    /* validate coherence, can not assume uncached area... */
+    ((FUNCPTR)ROM_OFFSET(checkLongs))
+    (ROM_TEXT_ADRS, (UINT)romInit,
+        ((UINT)binArrayStart - (UINT)romInit) / sizeof (long));
 
-#if 0//(CPU==XSCALE)
-  /* validate coherence, can not assume uncached area... */
-  ((FUNCPTR)ROM_OFFSET(checkLongs))
-  (ROM_TEXT_ADRS, (UINT)romInit,
-      ((UINT)binArrayStart - (UINT)romInit) / sizeof (long));
+    ((FUNCPTR)ROM_OFFSET(checkLongs))
+    ((UINT *)((UINT)ROM_TEXT_ADRS + ((UINT)BINARRAYEND_ROUNDOFF -
+                (UINT)romInit)), (UINT *)BINARRAYEND_ROUNDOFF,
+        ((UINT)wrs_kernel_data_end - (UINT)binArrayEnd) / sizeof (long));
+  #endif
+  #endif  /* CPU_FAMILY == MIPS */
 
-  ((FUNCPTR)ROM_OFFSET(checkLongs))
-  ((UINT *)((UINT)ROM_TEXT_ADRS + ((UINT)BINARRAYEND_ROUNDOFF -
-              (UINT)romInit)), (UINT *)BINARRAYEND_ROUNDOFF,
-      ((UINT)wrs_kernel_data_end - (UINT)binArrayEnd) / sizeof (long));
-#endif
-#endif  /* CPU_FAMILY == MIPS */
+  #endif  /* UNCOMPRESS */
+  #endif  /* ROM_RESIDENT */
 
-#endif  /* UNCOMPRESS */
-#endif  /* ROM_RESIDENT */
+  #if 1//(CPU_FAMILY != MIPS) && (!defined (BOOTCODE_IN_RAM))
 
-#if (CPU_FAMILY != MIPS) && (!defined (BOOTCODE_IN_RAM))
-
-  /* clear all memory if cold booting */
-
+   /* clear all memory if cold booting */
   if (startType & BOOT_CLEAR)
   {
-#ifdef ROM_RESIDENT
+    #ifdef ROM_RESIDENT
     /* Clear memory not loaded with text & data.
      *
      * We are careful about initializing all memory (except
@@ -314,20 +315,20 @@ void romStart(FAST int startType /* start type */)
     fillLongs (((UINT *) wrs_kernel_data_end),
         ((UINT)SYS_MEM_TOP - ((UINT) wrs_kernel_data_end)) / sizeof(long), 0);
 
-#else   /* ROM_RESIDENT */
-    fillLongs ((UINT *)(SYS_MEM_BOTTOM),
-        ((UINT)romInit - STACK_SAVE - (UINT)SYS_MEM_BOTTOM) /
-        sizeof(long), 0);
+    #else   /* ROM_RESIDENT */
+      fillLongs ((UINT *)(SYS_MEM_BOTTOM),
+          ((UINT)romInit - STACK_SAVE - (UINT)SYS_MEM_BOTTOM) /
+            sizeof(long), 0);
 
-#if     defined (UNCOMPRESS)
-    fillLongs ((UINT *)((UINT)romInit + ROM_COPY_SIZE),
-        ((UINT)SYS_MEM_TOP - ((UINT)romInit + ROM_COPY_SIZE))
-        / sizeof(long), 0);
-#else
-    fillLongs ((UINT *)wrs_kernel_data_end,
-        ((UINT)SYS_MEM_TOP - (UINT)wrs_kernel_data_end) / sizeof (long), 0);
-#endif  /* UNCOMPRESS */
-#endif  /* ROM_RESIDENT */
+    #if defined (UNCOMPRESS)
+      fillLongs ((UINT *)((UINT)romInit + ROM_COPY_SIZE),
+          ((UINT)SYS_MEM_TOP - ((UINT)romInit + ROM_COPY_SIZE))
+          / sizeof(long), 0);
+    #else
+      fillLongs ((UINT *)wrs_kernel_data_end,
+          ((UINT)SYS_MEM_TOP - (UINT)wrs_kernel_data_end) / sizeof (long), 0);
+    #endif  /* UNCOMPRESS */
+    #endif  /* ROM_RESIDENT */
 
     /*
      * Ensure the boot line is null. This is necessary for those
@@ -337,44 +338,44 @@ void romStart(FAST int startType /* start type */)
     *(BOOT_LINE_ADRS) = EOS;
   }
 
-#endif  /* (CPU_FAMILY != MIPS) && (!defined (BOOTCODE_IN_RAM)) */
+  #endif  /* (CPU_FAMILY != MIPS) && (!defined (BOOTCODE_IN_RAM)) */
 
-  /* jump to VxWorks entry point (after uncompressing) */
+    /* jump to VxWorks entry point (after uncompressing) */
 
-#if defined (UNCOMPRESS) || defined (ROM_RESIDENT)
-#if (CPU_FAMILY == I960)
-  absEntry = (FUNCPTR)sysInitAlt; /* reinit proc tbl */
-#else
-  absEntry = (FUNCPTR)usrInit; /* on to bootConfig */
-#endif  /* CPU_FAMILY == I960 */
+  #if defined (UNCOMPRESS) || defined (ROM_RESIDENT)
+  #if (CPU_FAMILY == I960)
+    absEntry = (FUNCPTR)sysInitAlt; /* reinit proc tbl */
+  #else
+    absEntry = (FUNCPTR)usrInit; /* on to bootConfig */
+  #endif  /* CPU_FAMILY == I960 */
 
-#else
-  {
-#if (CPU_FAMILY == MIPS)
-    volatile FUNCPTR absUncompress = (FUNCPTR) UNCMP_RTN;
-    if ( (absUncompress)((UCHAR *) ROM_OFFSET(binArrayStart),
-        (UCHAR *) K0_TO_K1(RAM_DST_ADRS),
-        (int) ((UINT) binArrayEnd - (UINT) binArrayStart)) != OK)
-#elif   (CPU_FAMILY == I80X86) || (CPU_FAMILY == ARM)
-      volatile FUNCPTR absUncompress = (FUNCPTR) UNCMP_RTN;
-      if ((absUncompress) ((UCHAR *)ROM_OFFSET(binArrayStart),
-              (UCHAR *)RAM_DST_ADRS, binArrayEnd - binArrayStart) != OK)
-#else
-      if (UNCMP_RTN ((UCHAR *)ROM_OFFSET(binArrayStart),
-              (UCHAR *)RAM_DST_ADRS, binArrayEnd - binArrayStart) != OK)
-#endif  /* (CPU_FAMILY == MIPS) */
-      return; /* if we return then ROM's will halt */
+  #else
+    {
+      #if 0//(CPU_FAMILY == MIPS)
+          volatile FUNCPTR absUncompress = (FUNCPTR) UNCMP_RTN;
+          if ( (absUncompress)((UCHAR *) ROM_OFFSET(binArrayStart),
+              (UCHAR *) K0_TO_K1(RAM_DST_ADRS),
+              (int) ((UINT) binArrayEnd - (UINT) binArrayStart)) != OK)
+      #elif   (CPU_FAMILY == I80X86) || (CPU_FAMILY == ARM)
+            volatile FUNCPTR absUncompress = (FUNCPTR) UNCMP_RTN;
+            if ((absUncompress) ((UCHAR *)ROM_OFFSET(binArrayStart),
+                    (UCHAR *)RAM_DST_ADRS, binArrayEnd - binArrayStart) != OK)
+      #else
+            if (UNCMP_RTN ((UCHAR *)ROM_OFFSET(binArrayStart),
+                    (UCHAR *)RAM_DST_ADRS, binArrayEnd - binArrayStart) != OK)
+      #endif  /* (CPU_FAMILY == MIPS) */
+            return; /* if we return then ROM's will halt */
 
-    absEntry = (FUNCPTR) RAM_DST_ADRS; /* compressedEntry () */
+          absEntry = (FUNCPTR) RAM_DST_ADRS; /* compressedEntry () */
+    }
+  #endif  /* defined UNCOMPRESS || defined ROM_RESIDENT */
+
+  #if ((CPU_FAMILY == ARM) && ARM_THUMB)
+    absEntry = (FUNCPTR)((UINT32)absEntry | 1); /* force Thumb state */
+  #endif  /* CPU_FAMILY == ARM */
+
+    (absEntry)(startType);
   }
-#endif  /* defined UNCOMPRESS || defined ROM_RESIDENT */
-
-#if ((CPU_FAMILY == ARM) && ARM_THUMB)
-  absEntry = (FUNCPTR)((UINT32)absEntry | 1); /* force Thumb state */
-#endif  /* CPU_FAMILY == ARM */
-
-  (absEntry)(startType);
-}
 
 #if     (CPU_FAMILY==ARM) && (!defined(ROM_RESIDENT))
 #undef fillLongs
@@ -395,7 +396,6 @@ LOCAL void copyLongs(source, destination, nlongs)
   FAST UINT *source; /* pointer to source buffer      */
   FAST UINT *destination; /* pointer to destination buffer */
   UINT nlongs; /* number of longs to copy       */
-
 {
   FAST UINT *dstend = destination + nlongs;
   FAST UINT nchunks;

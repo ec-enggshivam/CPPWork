@@ -198,11 +198,12 @@ delay_loop:
 #endif /* defined(CPU_920T/920T_T/1020E/1022E/1136JF) */
 
 	MCR	CP_MMU, 0, r1, c1, c0, 0	/* Write to MMU CR */
+/*some delay cycles for cache operation to complete
 #if defined(CPU_1020E)
 	NOP
 	NOP
 	NOP
-#endif /* defined(CPU_1020E) */
+#endif*/ /* defined(CPU_1020E) */
 
 	/*
 	 * If MMU was on before this, then we'd better hope it was set
@@ -217,15 +218,6 @@ delay_loop:
 	 * happen now.
 	 */
 
-#if defined(CPU_720T) || defined(CPU_720T_T) || \
-    defined(CPU_740T) || defined(CPU_740T_T)
-	MOV	r2, #INTEGRATOR_RESET_RAM_BASE	/* RAM base at reset */
-	SWPB	r1, r1, [r2]			/* Drain write-buffer */
-
-	/* Flush, (i.e. invalidate) all entries in the ID-cache */
-	MCR	CP_MMU, 0, r1, c7, c0, 0	/* Flush (inval) all ID-cache */
-#endif /* defined(CPU_720T,740T) */
-
 #if defined(CPU_920T)  || defined(CPU_920T_T)  || \
     defined(CPU_926E) || defined(CPU_926E_T) || \
     defined(CPU_946ES) || defined(CPU_946ES_T) || \
@@ -233,59 +225,34 @@ delay_loop:
     defined(CPU_1136JF)
 	MOV	r1, #0				/* data SBZ */
 	MCR	CP_MMU, 0, r1, c7, c10, 4	/* drain write-buffer */
-#if defined(CPU_1020E)
-        NOP
-        NOP
-        NOP
-#endif /* defined(CPU_1020E) */
 
 	/* Flush (invalidate) both I and D caches */
-
 	MCR	CP_MMU, 0, r1, c7, c7, 0	/* R1 = 0 from above, data SBZ*/
-#if defined(CPU_1020E)
-        NOP
-        NOP
-        NOP
-#endif /* defined(CPU_1020E) */
+
 #if defined(CPU_920T) || defined(CPU_920T_T) || \
     defined(CPU_926E) || defined(CPU_926E_T) || \
     defined(CPU_1020E) || defined(CPU_1022E) || \
     defined(CPU_1136JF)
-#if defined(INTEGRATOR_EARLY_I_CACHE_ENABLE)
-        MRC     CP_MMU, 0, r1, c1, c0, 0
-	ORR	r1, r1, #MMUCR_I_ENABLE		/* conditionally enable Icache*/
-        MCR     CP_MMU, 0, r1, c1, c0, 0        /* Write to MMU CR */
-#endif /* defined(INTEGRATOR_EARLY_I_CACHE_ENABLE) */
+  #if defined(INTEGRATOR_EARLY_I_CACHE_ENABLE)
+    MRC     CP_MMU, 0, r1, c1, c0, 0
+  	ORR	r1, r1, #MMUCR_I_ENABLE		/* conditionally enable Icache*/
+    MCR     CP_MMU, 0, r1, c1, c0, 0        /* Write to MMU CR */
+  #endif /* defined(INTEGRATOR_EARLY_I_CACHE_ENABLE) */
 #endif /* defined(CPU_920T,926E,946ES,1020E,1022E,1136JF) */
-
-#if defined(CPU_940T) || defined(CPU_940T_T)
-	LDR	r1, L$_sysCacheUncachedAdrs	/* R1 -> uncached area */
-	LDR	r1, [r1]			/* drain write-buffer */
-
-	/* Flush (invalidate) both caches */
-
-	MOV	r1, #0				/* data SBZ */
-	MCR	CP_MMU, 0, r1, c7, c5, 0	/* Flush (inval) all I-cache */
-	MCR	CP_MMU, 0, r1, c7, c6, 0	/* Flush (inval) all D-cache */
-#endif /* defined(940T,940T_T) */
 
 #if defined(CPU_720T)  || defined(CPU_720T_T) || \
     defined(CPU_920T)  || defined(CPU_920T_T) || \
     defined (CPU_926E) || defined (CPU_926E_T) || \
     defined(CPU_1020E) || defined(CPU_1022E) || \
     defined(CPU_1136JF)
-        /*
+  /*
 	 * Set Process ID Register to zero, this effectively disables
 	 * the process ID remapping feature.
+	 This step is essentially making sure that the MMU has flat addressing mode is
+	 enabled.
 	 */
-
 	MOV	r1, #0
 	MCR	CP_MMU, 0, r1, c13, c0, 0
-#if defined(CPU_1020E)
-        NOP
-        NOP
-        NOP
-#endif /* defined(CPU_1020E) */
 
 #endif /* defined(CPU_720T,920T,1020E, 1022E) */
 
@@ -294,17 +261,17 @@ delay_loop:
     defined (CPU_1020E) || defined (CPU_1020E_T) || \
     defined (CPU_1022E) || defined (CPU_1022E_T) || \
     defined (CPU_1136JF)
-                                                                                                        
-            /* Set Context ID Register to zero, including Address Space ID */
-                                                                                                        
-            MCR     CP_MMU, 0, r1, c13, c0, 1
+   /* Set Context ID Register to zero, including Address Space ID.
+   This step is again to ensure that the addressing is flat and virtual addressing
+   is disabled.
+    */
+    MCR     CP_MMU, 0, r1, c13, c0, 1
 #endif /* defined (CPU_926E, 946ES,1020E, 1022E, 1136JF) */
 
 
 #endif /* defined(CPU_720T,740T,920T,940T,946ES,1020E,1022E,1136JF) */
 
 	/* disable interrupts in CPU and switch to SVC32 mode */
-
 	MRS	r1, cpsr
 	BIC	r1, r1, #MASK_MODE
 	ORR	r1, r1, #MODE_SVC32 | I_BIT | F_BIT
@@ -354,7 +321,6 @@ HiPosn:
 	/*
 	 * Enable Instruction SRAM, Data SRAM and Write buffer.
 	 */
-
 	LDR	r1, =ARM966_I_SRAM_ENABLE | ARM966_WBUFF_ENABLE | \
                      ARM966_D_SRAM_ENABLE
 	MCR	CP_MMU, 0, r1, c1, c0, 0
@@ -398,7 +364,6 @@ HiPosn:
 
 clock1:
 	/* If bits[23:24] were 0, set asynchronous mode in HDR_CTRL */
-
 	LDRLT	r2, [r1, #INTEGRATOR_HDR_CTRL_OFFSET]
 	BICLT	r2, r2, #INTEGRATOR_HDR_CTRL_FASTBUS
 	STRLT	r2, [r1, #INTEGRATOR_HDR_CTRL_OFFSET]
@@ -411,8 +376,7 @@ clock1:
 	 * Read HDR_PROC register, if this is non zero then there is no
 	 * coprocessor, in this case use the default settings. First,
 	 * load the default settings.
-         */
-
+   */
 	LDR	r2, =INTEGRATOR_HDR_OSC_DFLT_VAL
 	LDR	r1, =INTEGRATOR_HDR_BASE
 	LDR	r3, [r1, #INTEGRATOR_HDR_PROC_OFFSET]
@@ -428,7 +392,6 @@ clock1:
 	 * For safety's sake, make the following conditional upon there being a
 	 * coprocessor in the CPU.
 	 */
-
 #if defined(CPU_720T)  || defined(CPU_720T_T)  || \
     defined(CPU_740T)  || defined(CPU_740T_T)  || \
     defined(CPU_920T)  || defined(CPU_920T_T)  || \
@@ -447,7 +410,7 @@ clock1:
 	BEQ	write_clock
 
 	CMP	r3, #0x740		/* is this a 740 */
-        LDREQ   r2, =INTEGRATOR_HDR_OSC_740T_VAL
+  LDREQ   r2, =INTEGRATOR_HDR_OSC_740T_VAL
 	BEQ     write_clock
 
 	CMP	r3, #0x940		/* is this a 940 */
@@ -504,7 +467,6 @@ write_clock:
 #endif /* !defined (CPU_1136JF) */
 
 	/* Set up System BUS and PCI clocks */
-
 	LDR	r1, =INTEGRATOR_SC_BASE
 	STR	r3, [r1, #INTEGRATOR_SC_LOCK_OFFSET]
 	LDR	r2, =(INTEGRATOR_SC_OSC_SYS_20MHz | INTEGRATOR_SC_OSC_PCI_33MHz)
@@ -513,27 +475,22 @@ write_clock:
 	STR	r2, [r1, #INTEGRATOR_SC_LOCK_OFFSET]
 
 	/* Initialize static memory. */
-
 	MOV	r1, #INTEGRATOR_EBI_BASE
 	
 	/* CS0 - ROM (Boot Flash) */
-
 	MOV	r2, #INTEGRATOR_EBI_8_BIT | INTEGRATOR_EBI_WS_3
 	STR	r2, [r1, #INTEGRATOR_EBI_CSR0_OFFSET]
 
 	/* CS1 - Flash (Application Flash) */
-
 	MOV	r2, #INTEGRATOR_EBI_32_BIT | INTEGRATOR_EBI_WS_3
 	STR	r2, [r1, #INTEGRATOR_EBI_CSR1_OFFSET]
 
 	/* CS2 - SSRAM (Not on Rev A Boards) */
-
 	MOV	r2, #INTEGRATOR_EBI_32_BIT | INTEGRATOR_EBI_WRITE_ENABLE | \
 		     INTEGRATOR_EBI_SYNC | INTEGRATOR_EBI_WS_2
 	STR	r2, [r1, #INTEGRATOR_EBI_CSR2_OFFSET]
 
 	/* CS3 - Unused (Set up for debug) */
-
 	MOV	r2, #INTEGRATOR_EBI_8_BIT | INTEGRATOR_EBI_WRITE_ENABLE
 	STR	r2, [r1, #INTEGRATOR_EBI_CSR3_OFFSET]
 	
@@ -554,7 +511,6 @@ sdram1:
 	LDR	r3, [r1]			/* Load contents of HDR_SDRAM */
 
 	/* Check to see if SPD data is loaded */
-
 	TST	r3, #INTEGRATOR_HDR_SDRAM_SPD_OK
 	BNE	sdram2
 	SUBS	r2, r2, #1			/* Decrement the count */
@@ -562,12 +518,10 @@ sdram1:
 
 sdram2:
 	/* Load address of the base of SPD data */
-
 	LDR	r1, =INTEGRATOR_HDR_SPDBASE
 	MOV	r3, #0
 
 	/* Calculate the memory size from the SPD data. */
-
 	LDRB	r2, [r1, #31]		/* Get Module Bank Density */
 	MOV	r2, r2, LSL #2		/* Multiply by 4 */
 	LDRB	r3, [r1, #5]		/* Get Number of Banks */
@@ -575,7 +529,6 @@ sdram2:
 	BEQ	sdram5			/* If zero then something's gone wrong*/
 
 	/* The maximum SDRAM DIMM supported is 256 Mbytes */
-
 	CMP	r2, #256
 	BGT	sdram5
 
@@ -590,7 +543,6 @@ sdram2:
 	 * algorithm to find LOG2 of number is to count the number of trailing
 	 * zeros.
 	 */
-
 	MOV	r1, #0		/* Initialise the counter */
 sdram4:
 	TST	r2, #1		/* Is the bottom bit set of the size varible */
@@ -684,7 +636,6 @@ sdram6:
 	MOV	fp, #0			/* zero frame pointer */
 
 	/* jump to C entry point in ROM: routine - entry point + ROM base */
-
 #if	(ARM_THUMB)
 	LDR	r12, L$_rStrtInRom
 	ORR	r12, r12, #1		/* force Thumb state */

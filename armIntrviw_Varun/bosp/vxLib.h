@@ -30,21 +30,21 @@ modification history
 extern "C" {
 #endif
 
-#if	(CPU_FAMILY == MC680X0)
-#include "arch/mc68k/vx68kLib.h"
-#endif	/* (CPU_FAMILY == MC680X0) */
+//#if	(CPU_FAMILY == MC680X0)
+//#include "arch/mc68k/vx68kLib.h"
+//#endif	/* (CPU_FAMILY == MC680X0) */
 
 #if	CPU_FAMILY==I960
 #include "arch/i960/vxI960Lib.h"
 #endif  /* CPU_FAMILY==I960 */
 
-#if	CPU_FAMILY==AM29XXX
-#include "arch/am29k/vxAm29kLib.h"
-#endif  /* CPU_FAMILY==AM29XXX */
+//#if	CPU_FAMILY==AM29XXX
+//#include "arch/am29k/vxAm29kLib.h"
+//#endif  /* CPU_FAMILY==AM29XXX */
 
-#if     CPU_FAMILY==PPC
-#include "arch/ppc/vxPpcLib.h"
-#endif  /* CPU_FAMILY==PPC */
+//#if     CPU_FAMILY==PPC
+//#include "arch/ppc/vxPpcLib.h"
+//#endif  /* CPU_FAMILY==PPC */
 
 /* function declarations */
 

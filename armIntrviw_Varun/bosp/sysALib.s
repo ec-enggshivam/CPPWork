@@ -105,7 +105,6 @@ SEE ALSO:
 #endif
 
 /* externals */
-
 	.extern	FUNC(usrInit)		/* system initialization routine */
 
 #ifndef	_ARCH_SUPPORTS_PROTECT_INTERRUPT_STACK
@@ -114,22 +113,6 @@ SEE ALSO:
 	.extern	FUNC(vxIrqIntStackBase) /* base of IRQ-mode interrupt stack */
 	.extern	FUNC(vxIrqIntStackEnd)	/* end of IRQ-mode interrupt stack */
 #endif	/* !_ARCH_SUPPORTS_PROTECT_INTERRUPT_STACK */
-
-#if defined(CPU_720T) || defined(CPU_720T_T) || \
-    defined(CPU_740T) || defined(CPU_740T_T)
-
-/* variables */
-
-	.data
-	.balign	1			/* no alignment necessary */
-
-	/* variable used with a SWPB instruction to drain the write-buffer */
-
-sysCacheSwapVar:
-	.byte	0
-	.balign	4
-
-#endif /* defined(720T/720T_T/740T/740T_T) */
 
 	.text
 	.balign 4
@@ -189,16 +172,9 @@ _ARM_FUNCTION(sysInit)
 	 */
 
 	/* Setup MMU Control Register */
-
 	MOV	r1, #MMU_INIT_VALUE		/* Defined in mmuArmLib.h */
 
-
 	MCR	CP_MMU, 0, r1, c1, c0, 0	/* Write to MMU CR */
-#if defined(CPU_1020E)
-        NOP
-        NOP
-        NOP
-#endif /* defined(CPU_1020E) */
 
 	/*
 	 * If MMU was on before this, then we'd better hope it was set
@@ -213,16 +189,6 @@ _ARM_FUNCTION(sysInit)
 	 * happen now.
 	 */
 
-#if defined(CPU_720T) || defined(CPU_720T_T) || \
-    defined(CPU_740T) || defined(CPU_740T_T)
-	LDR	r2, L$_sysCacheSwapVar	/* R2 -> sysCacheSwapVar */
-	SWPB	r1, r1, [r2]
-
-	/* Flush, (i.e. invalidate) all entries in the ID-cache */
-
-	MCR	CP_MMU, 0, r1, c7, c0, 0	/* Flush (inval) all ID-cache */
-#endif /* defined(CPU_720T,740T) */
-
 #if defined(CPU_920T)  || defined(CPU_920T_T)  || \
     defined(CPU_926E) || defined(CPU_926E_T) || \
     defined(CPU_946ES) || defined(CPU_946ES_T) || \
@@ -230,20 +196,9 @@ _ARM_FUNCTION(sysInit)
     defined(CPU_1136JF)
 	MOV	r1, #0				/* data SBZ */
 	MCR	CP_MMU, 0, r1, c7, c10, 4	/* drain write-buffer */
-#if defined(CPU_1020E)
-        NOP
-        NOP
-        NOP
-#endif /* defined(CPU_1020E) */
 
 	/* Flush (invalidate) both I and D caches */
-
 	MCR	CP_MMU, 0, r1, c7, c7, 0	/* R1 = 0 from above, data SBZ*/
-#if defined(CPU_1020E)
-        NOP
-        NOP
-        NOP
-#endif /* defined(CPU_1020E) */
 
 #if defined (CPU_926E) || defined (CPU_926E_T)
         LDR     r1, L$_sysCacheUncachedAdrs     /* R2 -> uncached area */
@@ -256,41 +211,24 @@ _ARM_FUNCTION(sysInit)
     defined(CPU_1136JF)
 #if defined(INTEGRATOR_EARLY_I_CACHE_ENABLE)
 	MRC	CP_MMU, 0, r1, c1, c0, 0
-        ORR     r1, r1, #MMUCR_I_ENABLE         /* conditionally enable Icache*/
+  ORR     r1, r1, #MMUCR_I_ENABLE   /* conditionally enable Icache*/
 	MCR	CP_MMU, 0, r1, c1, c0, 0	/* Write to MMU CR */
 #endif /* defined(INTEGRATOR_EARLY_I_CACHE_ENABLE) */
 #endif /* defined(CPU_920T/920T_T/926E/1020E/1022E/1136) */
 
 #endif /* defined(CPU_920T,926E, 946ES,1020E,1022E, 1136JF) */
 
-#if defined(CPU_940T) || defined(CPU_940T_T)
-	LDR	r1, L$_sysCacheUncachedAdrs	/* R1 -> uncached area */
-	LDR	r1, [r1]			/* drain write-buffer */
-
-	/* Flush (invalidate) both caches */
-
-	MOV	r1, #0				/* data SBZ */
-	MCR	CP_MMU, 0, r1, c7, c5, 0	/* Flush (inval) all I-cache */
-	MCR	CP_MMU, 0, r1, c7, c6, 0	/* Flush (inval) all D-cache */
-#endif /* defined(940T,940T_T) */
-
 #if defined(CPU_720T)  || defined(CPU_720T_T) || \
     defined(CPU_920T)  || defined(CPU_920T_T) || \
     defined(CPU_926E)  || defined(CPU_926E_T) || \
     defined(CPU_1020E) || defined(CPU_1022E)  || \
     defined(CPU_1136JF)
-        /*
-         * Set Process ID Register to zero, this effectively disables
-         * the process ID remapping feature.
-         */
-
-        MOV     r1, #0
-        MCR     CP_MMU, 0, r1, c13, c0, 0
-#if defined(CPU_1020E)
-        NOP
-        NOP
-        NOP
-#endif /* defined(CPU_1020E) */
+      /*
+       * Set Process ID Register to zero, this effectively disables
+       * the process ID remapping feature.
+       */
+      MOV     r1, #0
+      MCR     CP_MMU, 0, r1, c13, c0, 0
 #endif /* defined(CPU_720T,920T,926E,1020E, 1022E) */
 
 #if defined (CPU_926E) || defined (CPU_926E_T) || \
@@ -298,15 +236,13 @@ _ARM_FUNCTION(sysInit)
     defined (CPU_1020E) || defined (CPU_1020E_T) || \
     defined (CPU_1136JF)
                                                                                                     
-        /* Set Context ID Register to zero, including Address Space ID */
-                                                                                                    
-        MCR     CP_MMU, 0, r1, c13, c0, 1
+    /* Set Context ID Register to zero, including Address Space ID */
+    MCR     CP_MMU, 0, r1, c13, c0, 1
 #endif /* defined (CPU_926E, 946ES) */
 
 #endif /* defined(CPU_720T,740T,920T,926E,940T,946ES,1020E,1022E) */
 
 	/* disable interrupts in CPU and switch to SVC32 mode */
-
 	MRS	r1, cpsr
 	BIC	r1, r1, #MASK_MODE
 	ORR	r1, r1, #MODE_SVC32 | I_BIT | F_BIT

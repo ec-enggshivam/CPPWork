@@ -89,10 +89,10 @@ SEE ALSO:
 #include <regs.h>
 #include <sysLib.h>
 #include "config.h"
-#include <arch/arm/mmuArmLib.h>
+#include <mmuArmLib.h>
 
 /* internals */
-	.globl  FUNC(sysInit)           /* start of system code */
+	.globl  FUNC(sysInit)        /* start of system code */
 #ifndef	_ARCH_SUPPORTS_PROTECT_INTERRUPT_STACK
 	.globl  FUNC(sysIntStackSplit)  /* routine to split interrupt stack */
 #endif	/* !_ARCH_SUPPORTS_PROTECT_INTERRUPT_STACK */
@@ -253,8 +253,7 @@ _ARM_FUNCTION(sysInit)
 	 *
 	 * disable individual interrupts in the interrupt controller
 	 */
-
-	MOV	r2, #IC_BASE			/* R2->interrupt controller */
+	MOV	r2, #IC_BASE	/* R2->interrupt controller */
 	MVN	r1, #0				/* &FFFFFFFF */
 	STR	r1, [r2, #FIQ_DISABLE-IC_BASE]	/* disable all FIQ sources */
 	STR	r1, [r2, #IRQ_DISABLE-IC_BASE]	/* disable all IRQ sources */
@@ -263,7 +262,6 @@ _ARM_FUNCTION(sysInit)
 #if !defined (CPU_1136JF)
 
 	/* Setup asynchronous clocking (eg. core and memory clocks different) */
-
 	LDR	r1, =INTEGRATOR_HDR_BASE
 	LDR	r2, [r1, #INTEGRATOR_HDR_OSC_OFFSET]
 	AND	r2, r2, #(3 << 23)
@@ -277,7 +275,6 @@ _ARM_FUNCTION(sysInit)
 	 * implementation-specific bits in the MMU control register - set
 	 * asynchronous mode.
 	 */
-
 	MRC	CP_MMU, 0, r2, c1, c0, 0
 	ORR	r2, r2, #MMUCR_ASYNC
 	MCR	CP_MMU, 0, r2, c1, c0, 0
@@ -285,7 +282,6 @@ _ARM_FUNCTION(sysInit)
 
 clock1:
 	/* If bits[23:24] were 0, set asynchronous mode in HDR_CTRL */
-
 	LDRLT	r2, [r1, #INTEGRATOR_HDR_CTRL_OFFSET]
 	BICLT	r2, r2, #INTEGRATOR_HDR_CTRL_FASTBUS
 	STRLT	r2, [r1, #INTEGRATOR_HDR_CTRL_OFFSET]
@@ -299,7 +295,6 @@ clock1:
 	 * coprocessor, in this case use the default settings. First,
 	 * load the default settings.
 	 */
-
 	LDR	r2, =INTEGRATOR_HDR_OSC_DFLT_VAL
 	LDR	r1, =INTEGRATOR_HDR_BASE
 	LDR	r3, [r1, #INTEGRATOR_HDR_PROC_OFFSET]
@@ -379,7 +374,6 @@ clock1:
 
 write_clock:
 	/* Write clock settings */
-
 	LDR	r1, =INTEGRATOR_HDR_BASE
 	LDR	r3, =0xA05F
 	STR	r3, [r1, #INTEGRATOR_HDR_LOCK_OFFSET]
@@ -392,7 +386,6 @@ write_clock:
 #endif /* !defined (CPU_1136JF) */
 
 	/* Set up System BUS and PCI clocks */
-
 	LDR	r1, =INTEGRATOR_SC_BASE
 	STR	r3, [r1, #INTEGRATOR_SC_LOCK_OFFSET]
 	LDR	r2, =(INTEGRATOR_SC_OSC_SYS_20MHz | INTEGRATOR_SC_OSC_PCI_33MHz)
@@ -401,35 +394,29 @@ write_clock:
 	STR	r2, [r1, #INTEGRATOR_SC_LOCK_OFFSET]
 
 	/* Initialize static memory. */
-
 	MOV	r1, #INTEGRATOR_EBI_BASE
 	
 	/* CS0 - ROM (Boot Flash) */
-
 	MOV	r2, #INTEGRATOR_EBI_8_BIT | INTEGRATOR_EBI_WS_3
 	STR	r2, [r1, #INTEGRATOR_EBI_CSR0_OFFSET]
 
 	/* CS1 - Flash (Application Flash) */
-
 	MOV	r2, #INTEGRATOR_EBI_32_BIT | INTEGRATOR_EBI_WS_3
 	STR	r2, [r1, #INTEGRATOR_EBI_CSR1_OFFSET]
 
 	/* CS2 - SSRAM (Not on Rev A Boards) */
-
 	MOV	r2, #INTEGRATOR_EBI_32_BIT | INTEGRATOR_EBI_WRITE_ENABLE | \
 		     INTEGRATOR_EBI_SYNC | INTEGRATOR_EBI_WS_2
 	STR	r2, [r1, #INTEGRATOR_EBI_CSR2_OFFSET]
 
 	/* CS3 - Unused (Set up for debug) */
-
 	MOV	r2, #INTEGRATOR_EBI_8_BIT | INTEGRATOR_EBI_WRITE_ENABLE
 	STR	r2, [r1, #INTEGRATOR_EBI_CSR3_OFFSET]
 
 
 	/* set initial stack pointer so stack grows down from start of code */
-
 	ADR	sp, FUNC(sysInit)		/* initialize stack pointer */
-	mov	fp, #0		                /* initialize frame pointer */
+	mov	fp, #0		         /* initialize frame pointer */
 	
 
 	/* Make sure Boot type is set correctly. visionClick doesn't */
@@ -526,7 +513,6 @@ _ARM_FUNCTION_CALLED_FROM_C(sysIntStackSplit)
 	STR	r2, [r3]
 
 	/* now allocate IRQ stack, setting irq_sp */
-
 	LDR	r3, L$_vxIrqIntStackEnd
 	STR	r2, [r3]
 	LDR	r3, L$_vxIrqIntStackBase
@@ -539,7 +525,6 @@ _ARM_FUNCTION_CALLED_FROM_C(sysIntStackSplit)
 	MOV	sp, r0
 
 	/* switch back to original mode and return */
-
 	MSR	cpsr, r2
 
 #if	(ARM_THUMB)
@@ -585,7 +570,6 @@ _ARM_FUNCTION_CALLED_FROM_C(archPwrDown)
         MCR     CP_CORECTL, 0, r0, c7, c0, 4  /* idle processor */
 
 /* Return after waking up */
-
 #if (ARM_THUMB)
 	BX	lr
 #else

@@ -69,8 +69,8 @@
 #include <cacheLib.h>
 
 #ifdef  INCLUDE_MMU
-#include <arch/arm/mmuArmLib.h>
-#include <private/vmLibP.h>
+#include <mmuArmLib.h>
+#include <vmLib.h>
 #endif  /* INCLUDE_MMU */
 #include <dllLib.h>
 #ifdef INCLUDE_PCI
@@ -117,29 +117,29 @@ PHYS_MEM_DESC sysPhysMemDesc[] = {
 /* adrs and length parameters must be page-aligned (multiples of 0x1000) */
 /* DRAM - Always the first entry */
 {
-LOCAL_MEM_LOCAL_ADRS, /* virtual address */
-LOCAL_MEM_LOCAL_ADRS, /* physical address */
-ROUND_UP(LOCAL_MEM_SIZE, PAGE_SIZE), /* length, then initial state: */
-VM_STATE_MASK_VALID | VM_STATE_MASK_WRITABLE | VM_STATE_MASK_CACHEABLE,
-    VM_STATE_VALID | VM_STATE_WRITABLE | VM_STATE_CACHEABLE },
+  LOCAL_MEM_LOCAL_ADRS, /* virtual address */
+  LOCAL_MEM_LOCAL_ADRS, /* physical address */
+  ROUND_UP(LOCAL_MEM_SIZE, PAGE_SIZE), /* length, then initial state: */
+  VM_STATE_MASK_VALID | VM_STATE_MASK_WRITABLE | VM_STATE_MASK_CACHEABLE,
+      VM_STATE_VALID | VM_STATE_WRITABLE | VM_STATE_CACHEABLE },
 
-/*
- * ROM is normally marked as uncacheable by VxWorks. We leave it like that
- * for the time being, even though this has a severe impact on execution
- * speed from ROM.
- */
-    {
-      ROM_BASE_ADRS,
-      ROM_BASE_ADRS, ROUND_UP(ROM_SIZE, PAGE_SIZE), VM_STATE_MASK_VALID
-          | VM_STATE_MASK_WRITABLE | VM_STATE_MASK_CACHEABLE,
-      #ifdef INCLUDE_FLASH
-          /* needs to be writable */
+  /*
+   * ROM is normally marked as uncacheable by VxWorks. We leave it like that
+   * for the time being, even though this has a severe impact on execution
+   * speed from ROM.
+   */
+  {
+    ROM_BASE_ADRS,
+    ROM_BASE_ADRS, ROUND_UP(ROM_SIZE, PAGE_SIZE), VM_STATE_MASK_VALID
+        | VM_STATE_MASK_WRITABLE | VM_STATE_MASK_CACHEABLE,
+    #ifdef INCLUDE_FLASH
+        /* needs to be writable */
 
-          VM_STATE_VALID | VM_STATE_WRITABLE | VM_STATE_CACHEABLE_NOT
-      #else
-          VM_STATE_VALID | VM_STATE_WRITABLE_NOT | VM_STATE_CACHEABLE_NOT
-      #endif
-    },
+        VM_STATE_VALID | VM_STATE_WRITABLE | VM_STATE_CACHEABLE_NOT
+    #else
+        VM_STATE_VALID | VM_STATE_WRITABLE_NOT | VM_STATE_CACHEABLE_NOT
+    #endif
+  },
 
   /*
    * I/O space:
@@ -150,29 +150,34 @@ VM_STATE_MASK_VALID | VM_STATE_MASK_WRITABLE | VM_STATE_MASK_CACHEABLE,
     INTEGRATOR_HDR_BASE, /* Core Module Header regs */
     INTEGRATOR_HDR_BASE, PAGE_SIZE, VM_STATE_MASK_VALID | VM_STATE_MASK_WRITABLE
         | VM_STATE_MASK_CACHEABLE, VM_STATE_VALID | VM_STATE_WRITABLE
-        | VM_STATE_CACHEABLE_NOT }, {
+        | VM_STATE_CACHEABLE_NOT
+  },
+  {
     INTEGRATOR_SC_BASE, /* System controller */
     INTEGRATOR_SC_BASE, PAGE_SIZE, VM_STATE_MASK_VALID | VM_STATE_MASK_WRITABLE
         | VM_STATE_MASK_CACHEABLE, VM_STATE_VALID | VM_STATE_WRITABLE
-        | VM_STATE_CACHEABLE_NOT }, {
+        | VM_STATE_CACHEABLE_NOT
+  },
+  {
     INTEGRATOR_EBI_BASE, /* EBI controller */
     INTEGRATOR_EBI_BASE, PAGE_SIZE, VM_STATE_MASK_VALID | VM_STATE_MASK_WRITABLE
         | VM_STATE_MASK_CACHEABLE, VM_STATE_VALID | VM_STATE_WRITABLE
-        | VM_STATE_CACHEABLE_NOT },
-#if defined(INCLUDE_TTY_DEV) || defined(INCLUDE_SIO_POLL)
-     {
+        | VM_STATE_CACHEABLE_NOT
+  },
+  #if defined(INCLUDE_TTY_DEV) || defined(INCLUDE_SIO_POLL)
+    {
       UART_0_BASE_ADR, /* PrimeCell UART */
       UART_0_BASE_ADR, PAGE_SIZE, VM_STATE_MASK_VALID | VM_STATE_MASK_WRITABLE
-        | VM_STATE_MASK_CACHEABLE, VM_STATE_VALID | VM_STATE_WRITABLE
-        | VM_STATE_CACHEABLE_NOT
-     },
-     {
-         UART_1_BASE_ADR, /* PrimeCell UART */
-         UART_1_BASE_ADR, PAGE_SIZE, VM_STATE_MASK_VALID | VM_STATE_MASK_WRITABLE
-        | VM_STATE_MASK_CACHEABLE, VM_STATE_VALID | VM_STATE_WRITABLE
-        | VM_STATE_CACHEABLE_NOT
-     },
-#endif /* INCLUDE_TTY_DEV || INCLUDE_SIO_POLL */
+          | VM_STATE_MASK_CACHEABLE, VM_STATE_VALID | VM_STATE_WRITABLE
+          | VM_STATE_CACHEABLE_NOT
+    },
+    {
+      UART_1_BASE_ADR, /* PrimeCell UART */
+      UART_1_BASE_ADR, PAGE_SIZE, VM_STATE_MASK_VALID | VM_STATE_MASK_WRITABLE
+          | VM_STATE_MASK_CACHEABLE, VM_STATE_VALID | VM_STATE_WRITABLE
+          | VM_STATE_CACHEABLE_NOT
+    },
+  #endif /* INCLUDE_TTY_DEV || INCLUDE_SIO_POLL */
 #ifdef INCLUDE_AMBAKEYBOARD
     {
       KBD_BASE_ADR, /* PrimeCell Keyboard */
@@ -221,14 +226,14 @@ VM_STATE_MASK_VALID | VM_STATE_MASK_WRITABLE | VM_STATE_MASK_CACHEABLE,
     },
 #else
     {
-        CPU_PCI_MEM_ADRS, /* PCI Mem space */
-        CPU_PCI_MEM_ADRS, ROUND_UP(CPU_PCI_MEM_SIZE, PAGE_SIZE), VM_STATE_MASK_VALID
+    CPU_PCI_MEM_ADRS, /* PCI Mem space */
+    CPU_PCI_MEM_ADRS, ROUND_UP(CPU_PCI_MEM_SIZE, PAGE_SIZE), VM_STATE_MASK_VALID
         | VM_STATE_MASK_WRITABLE | VM_STATE_MASK_CACHEABLE, VM_STATE_VALID
         | VM_STATE_WRITABLE | VM_STATE_CACHEABLE_NOT },
 #endif /* INTEGRATOR_CONSERVE_VIRTUAL_SPACE */
     {
-        V3_BASE, /* V360EPC register */
-        V3_BASE, ROUND_UP(V3_REGS_SIZE, PAGE_SIZE), VM_STATE_MASK_VALID
+    V3_BASE, /* V360EPC register */
+    V3_BASE, ROUND_UP(V3_REGS_SIZE, PAGE_SIZE), VM_STATE_MASK_VALID
         | VM_STATE_MASK_WRITABLE | VM_STATE_MASK_CACHEABLE, VM_STATE_VALID
         | VM_STATE_WRITABLE | VM_STATE_CACHEABLE_NOT },
 #endif /* INCLUDE_PCI */

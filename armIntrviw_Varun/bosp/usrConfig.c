@@ -1012,7 +1012,6 @@ IMPORT void vxSdaInit(void);
 extern char * startupScriptFieldSplit(char *);
 
 /* Two magic cookies used to detect data section misalignment */
-
 #define TRAP_VALUE_1  0x12348765
 #define TRAP_VALUE_2  0x5a5ac3c3
 LOCAL volatile UINT32 trapValue1 = TRAP_VALUE_1;
@@ -1264,7 +1263,6 @@ unsigned memPoolSize /* initial size of mem pool */
 
 #ifdef INCLUDE_MEM_ALLOT
   /* initialize memory manager */
-
   memAllotLibInit (pMemPoolStart, memPoolSize);
 #else  /* INCLUDE_MEM_ALLOT */
 # ifdef INCLUDE_MEM_MGR_FULL

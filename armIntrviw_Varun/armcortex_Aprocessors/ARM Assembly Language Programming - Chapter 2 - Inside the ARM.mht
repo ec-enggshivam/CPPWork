@@ -1,0 +1,1757 @@
+From: "Saved by Windows Internet Explorer 8"
+Subject: ARM Assembly Language Programming - Chapter 2 - Inside the ARM
+Date: Sun, 10 Jun 2012 18:49:42 +0530
+MIME-Version: 1.0
+Content-Type: multipart/related;
+	type="text/html";
+	boundary="----=_NextPart_000_0000_01CD4739.CBDA1EF0"
+X-MimeOLE: Produced By Microsoft MimeOLE V6.1.7600.16807
+
+This is a multi-part message in MIME format.
+
+------=_NextPart_000_0000_01CD4739.CBDA1EF0
+Content-Type: text/html;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Content-Location: http://www.peter-cockerell.net/aalp/html/ch-2.html
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD><TITLE>ARM Assembly Language Programming - Chapter 2 - =
+Inside the ARM</TITLE>
+<META content=3Dtext/html;charset=3Diso-8859-1 =
+http-equiv=3Dcontent-type><LINK=20
+rel=3Dstylesheet type=3Dtext/css=20
+href=3D"http://www.peter-cockerell.net/aalp/html/aalp.css">
+<META name=3DGENERATOR content=3D"MSHTML 8.00.7600.16891"></HEAD>
+<BODY>
+<SCRIPT language=3Djavascript=20
+src=3D"http://www.peter-cockerell.net/aalp/html/aalp.js"></SCRIPT>
+
+<P class=3DHeading-1>2. Inside the ARM</P>
+<P class=3DMain-Paragraph>In the previous chapter, we started by =
+considering=20
+instructions executed by a mythical processor with mnemonics like <SPAN=20
+class=3Dcomputer>ON</SPAN> and <SPAN class=3Dcomputer>OFF</SPAN>. Then =
+we went on to=20
+describe some of the features of an actual processor - the ARM. This =
+chapter=20
+looks in much more detail at the ARM, including the programmer's model =
+and its=20
+instruction types. We'll start by listing some important attributes of =
+the=20
+CPU:</P>
+<P class=3DHeading-3>Word size</P>
+<P class=3DMain-Paragraph>The ARM's word length is 4 bytes. That is, =
+it's a 32-bit=20
+micro and is most at home when dealing with units of data of that =
+length.=20
+However, the ability to process individual bytes efficiently is =
+important - as=20
+character information is byte oriented - so the ARM has provision for =
+dealing=20
+with these smaller units too.</P>
+<P class=3DHeading-3>Memory</P>
+<P class=3DMain-Paragraph>When addressing memory, ARM uses a 26-bit =
+address value.=20
+This allows for 2<SPAN class=3DH>26</SPAN> or 64M bytes of memory to be =
+accessed.=20
+Although individual bytes may be transferred between the processor and =
+memory,=20
+ARM is really word-based. All word-sized transfers must have the =
+operands in=20
+memory residing on word-boundaries. This means the instruction addresses =
+have to=20
+be multiples of four.</P>
+<P class=3DHeading-3>I/O</P>
+<P class=3DMain-Paragraph>Input and output devices are memory mapped. =
+There is no=20
+concept of a separate I/O address space. Peripheral chips are read and =
+written=20
+as if they were areas of memory. This means that in practical ARM =
+systems, the=20
+memory map is divided into three areas: RAM, ROM, and input/output =
+devices=20
+(probably in decreasing order of size).</P>
+<P class=3DHeading-3>Registers</P>
+<P class=3DMain-Paragraph>The register set, or programmer's model, of =
+the ARM=20
+could not really be any simpler. Many popular processors have a host of=20
+dedicated (or special-purpose) registers of varying sizes which may only =
+be used=20
+with certain instructions or in particular circumstances. ARM has =
+sixteen 32-bit=20
+registers which may be used without restriction in any instruction. =
+There is=20
+very little dedication - only one of the registers being permanently =
+tied up by=20
+the processor.</P>
+<P class=3DHeading-3>Instructions</P>
+<P class=3DMain-Paragraph>As the whole philosophy of the ARM is based on =
+'fast and=20
+simple', we would expect the instruction set to reflect this, and indeed =
+it=20
+does. A small, easily remembered set of instruction types is available. =
+This=20
+does not imply a lack of power, though. Firstly, instructions execute =
+very=20
+quickly, and secondly, most have useful extras which add to their =
+utility=20
+without detracting from the ease of use.</P>
+<P class=3DHeading-2>2.1 Memory and addressing</P>
+<P class=3DMain-Paragraph>The lowest address that ARM can use is that =
+obtained by=20
+placing 0s on all of the 26 address lines - address &amp;0000000. The =
+highest=20
+possible address is obtained by placing 1s on the 26 address signals, =
+giving=20
+address &amp;3FFFFFF. All possible combinations between these two =
+extremes are=20
+available, allowing a total of 64M bytes to be addressed. Of course, it =
+is very=20
+unlikely that this much memory will actually be fitted in current =
+machines, even=20
+with the ever-increasing capacities of RAM and ROM chips. One or four =
+megabytes=20
+of RAM is a reasonable amount to expect using today's technology.</P>
+<P class=3DMain-Paragraph>Why allow such a large address range then? =
+There are=20
+several good reasons. Firstly, throughout the history of computers, =
+designers=20
+have under-estimated how much memory programmers (or rather their =
+programs) can=20
+actually use. A good maxim is 'programs will always grow to fill the =
+space=20
+available. And then some.' In the brief history of microprocessors, the=20
+addressing range of CPUs has grown from 256 single bytes to 4 billion =
+bytes=20
+(i.e. 4,000,000,000 bytes) for some 32-bit micros. As the price of =
+memory=20
+continues to fall, we can expect 16M and even 32M byte RAM capacities to =
+become=20
+available fairly cheaply.</P>
+<P class=3DMain-Paragraph>Another reason for providing a large address =
+space is to=20
+allow the possibility of using virtual memory. Virtual memory is a =
+technique=20
+whereby the fast but relatively expensive semiconductor RAM is =
+supplemented by=20
+slower but larger capacity magnetic storage, e.g. a Winchester disc. For =
+
+example, we might allocate 16M bytes of a Winchester disc to act as =
+memory for=20
+the computer. The available RAM is used to 'buffer' as much of this as =
+possible,=20
+say 512K bytes, making it rapidly accessible. When the need arises to =
+access=20
+data which is not currently in RAM, we load it in from the Winchester. =
+</P>
+<P class=3DMain-Paragraph>Virtual memory is an important topic, but a =
+detailed=20
+discussion of it is outside the scope of this book. We do mention some =
+basic=20
+virtual memory techniques when talking about the memory controller chip =
+in=20
+Chapter Seven.</P>
+<P class=3DParagraph-no-space>The diagram below illustrates how the ARM =
+addresses=20
+memory words and bytes.</P>
+<DIV align=3Dleft>
+<P class=3DMain-Paragraph><A=20
+href=3D"http://www.peter-cockerell.net/aalp/html/images/fig2-1-hi.jpg"><I=
+MG=20
+border=3D0 =
+src=3D"http://www.peter-cockerell.net/aalp/html/images/fig2-1-hi.jpg"=20
+width=3D335 height=3D165></A></P></DIV>
+<P class=3DMain-Paragraph>The addresses shown down the left hand side =
+are word=20
+addresses, and increase in steps of four. Word addresses always have =
+their least=20
+two significant bits set to zero and the other 24 bits determine which =
+word is=20
+required. Whenever the ARM fetches an instruction from memory, a word =
+address is=20
+used. Additionally, when a word-size operand is transferred from the ARM =
+to=20
+memory, or vice versa, a word address is used.</P>
+<P class=3DMain-Paragraph>When byte-sized operands are accessed, all 26 =
+address=20
+lines are used, the least significant two bits specifying which byte =
+within the=20
+word is required. There is a signal from the ARM chip which indicates =
+whether=20
+the current transfer is a word or byte-sized one. This signal is used by =
+the=20
+memory system to enable the appropriate memory chips. We will have more =
+to say=20
+about addressing in the section on data transfer instructions.</P>
+<P class=3DMain-Paragraph>The first few words of ARM memory have special =
+
+significance. When certain events occur, e.g. the ARM is reset or an =
+illegal=20
+instruction is encountered, the processor automatically jumps to one of =
+these=20
+first few locations. The instructions there perform the necessary =
+actions to=20
+deal with the event. Other than this, all ARM memory was created equal =
+and its=20
+use is determined solely by the designer of the system.</P>
+<P class=3DMain-Paragraph>For the rest of this section, we give brief =
+details of=20
+the use of another chip in the ARM family called the MEMC. This =
+information is=20
+not vital to most programmers, and may be skipped on the first =
+reading.</P>
+<P class=3DMain-Paragraph>A topic which is related to virtual memory =
+mentioned=20
+above, and which unlike that, is within the scope of this book, is the=20
+relationship between 'physical' and 'logical' memory in ARM systems. =
+Many=20
+ARM-based machines use a device called the Memory Controller - MEMC - =
+which is=20
+part of the same family of devices as the ARM CPU. (Other members are =
+the Video=20
+Controller and I/O Controller, called VIDC and IOC respectively.)</P>
+<P class=3DMain-Paragraph>When an ARM-based system uses MEMC, its memory =
+map is=20
+divided into three main areas. The bottom half - 32M bytes - is called =
+logical=20
+RAM, and is the memory that most programs 'see' when they are executing. =
+The=20
+next 16M bytes is allocated to physical RAM. This area is only visible =
+to system=20
+programs which use the CPU in a special mode called <SPAN=20
+class=3DItalic>supervisor mode</SPAN>. Finally, the top 16M bytes is =
+occupied by=20
+ROM and I/O devices.</P>
+<P class=3DMain-Paragraph>The logical and physical RAM is actually the =
+same thing,=20
+and the data is stored in the same RAM chips. However, whereas physical =
+RAM=20
+occupies a contiguous area from address 32M to 32M+(memory size)-1, =
+logical RAM=20
+may be scattered anywhere in the bottom 32M bytes. The physical RAM is =
+divided=20
+into 128 'pages'. The size of a page depends on how much RAM the machine =
+has.=20
+For example, in a 1M byte machine, a page is 8K bytes; in a 4M byte =
+machine (the=20
+maximum that the current MEMC chip can handle) it is 32K bytes.</P>
+<P class=3DMain-Paragraph>A table in MEMC is programmed to control where =
+each=20
+physical page appears in the logical memory map. For example, in a =
+particular=20
+system it might be convenient to have the screen memory at the very top =
+of the=20
+32M byte logical memory area. Say the page size is 8K bytes and 32K is =
+required=20
+for the screen. The MEMC would be programmed so that four pages of =
+physical RAM=20
+appear at the top 32K bytes of the logical address space. These four =
+pages would=20
+be accessible to supervisor mode programs at both this location and in =
+the=20
+appropriate place in the physical memory map, and to non-supervisor =
+programs at=20
+just the logical memory map position.</P>
+<P class=3DMain-Paragraph>When a program accesses the logical memory, =
+the MEMC=20
+looks up where corresponding physical RAM is and passes that address on =
+to the=20
+RAM chips. You could imagine the address bus passing through the MEMC on =
+its way=20
+to the memory, and being translated on the way. This translation is =
+totally=20
+transparent to the programmer. If a program tries to access a logical =
+memory=20
+address for which there is no corresponding physical RAM (remember only =
+at most=20
+4M bytes of the possible 32M can be occupied), a signal called 'data =
+abort' is=20
+activated on the CPU. This enables attempts to access 'illegal' =
+locations to be=20
+dealt with.</P>
+<P class=3DMain-Paragraph>As the 4M byte limit only applies to the =
+current MEMC=20
+chip, there is no reason why a later device shouldn't be able to access =
+a much=20
+larger area of physical memory.</P>
+<P class=3DMain-Paragraph>Because of the translation performed by MEMC, =
+the=20
+logical addresses used to access RAM may be anywhere in the memory map. =
+Looked=20
+at in another way, this means that a 1M byte machine will not =
+necessarily appear=20
+to have all of this RAM at the bottom of the memory map; it might be =
+scattered=20
+into different areas. For example, one 'chunk' of memory might be used =
+for the=20
+screen and mapped onto a high address, whereas another region, used for=20
+application programs say, might start at a low address such as =
+&amp;8000.</P>
+<P class=3DMain-Paragraph>Usually, the presence of MEMC in a system is =
+if no=20
+consequence to a program, but it helps to explain how the memory map of =
+an=20
+ARM-based computer appears as it does. </P>
+<P class=3DHeading-2>2.2 Programmer's model</P>
+<P class=3DMain-Paragraph>This section describes the way in which the =
+ARM presents=20
+itself to the programmer. The term 'model' is employed because although =
+it=20
+describes what the programmer sees when programming the ARM, the =
+internal=20
+representation may be very different. So long as programs behave as =
+expected=20
+from the description given, these internal details are unimportant.</P>
+<P class=3DMain-Paragraph>Occasionally however, a particular feature of =
+the=20
+processor's operation may be better understood if you know what the ARM =
+is=20
+getting up to internally. These situations are explained as they arise =
+in the=20
+descriptions presented below.</P>
+<P class=3DMain-Paragraph>As mentioned above, ARM has a particularly =
+simple=20
+register organisation, which benefits both human programmers and =
+compilers,=20
+which also need to generate ARM programs. Humans are well served because =
+our=20
+feeble brains don't have to cope with such questions as 'can I use the X =
+
+register as an operand with the ADD instruction?' These crop up quite =
+frequently=20
+when programming in assembler on certain micros, making coding a =
+tiresome=20
+task.</P>
+<P class=3DMain-Paragraph>There are sixteen user registers. They are all =
+32-bits=20
+wide. Only two are dedicate; the others are general purpose and are used =
+to=20
+store operands, results and pointers to memory. Of the two dedicated =
+registers,=20
+only one of these is permanently used for a special purpose (it is the =
+PC).=20
+Sixteen is quite a large number of registers to provide, some micros =
+managing=20
+with only one general purpose register. These are called =
+accumulator-based=20
+processors, and the 6502 is an example of such a chip.</P>
+<P class=3DMain-Paragraph>All of the ARM's registers are general =
+purpose. This=20
+means that wherever an instruction needs a register to be specified as =
+an=20
+operand, any one of them may be used. This gives the programmer great =
+freedom in=20
+deciding which registers to use for which purpose. </P>
+<P class=3DMain-Paragraph>The motivation for providing a generous =
+register set=20
+stems from the way in which the ARM performs most of its operations. All =
+data=20
+manipulation instructions use registers. That is, if you want to add two =
+32-bit=20
+numbers, both of the numbers must be in registers, and the result is =
+stored in a=20
+third register. It is not possible to add a number in memory to a =
+register, or=20
+vice versa. In fact, the only time the ARM accesses memory is to fetch=20
+instructions and when executing one of the few register-to-memory =
+transfer=20
+instructions.</P>
+<P class=3DMain-Paragraph>So, given that most processing is restricted =
+to using=20
+the fast internal registers, it is only fair that a reasonable number of =
+them is=20
+provided. Studies by computer scientists have shown that eight =
+general-purpose=20
+registers is sufficient for most types of program, so 16 should be =
+plenty.</P>
+<P class=3DMain-Paragraph>When designing the ARM, Acorn may well have =
+been tempted=20
+to include even more registers, say 32, using the 'too much is never =
+enough'=20
+maxim mentioned above. However, it is important to remember that if an=20
+instruction is to allow any register as an operand, the register number =
+has to=20
+be encoded in the instruction. 16 registers need four bits of encoding; =
+32=20
+registers would need five. Thus by increasing the number of registers, =
+they=20
+would have decreased the number of bits available to encode other =
+information in=20
+the instructions.</P>
+<P class=3DMain-Paragraph>Such trade-offs are common in processor =
+design, and the=20
+utility of the design depends on whether the decisions have been made =
+wisely. On=20
+the whole, Acorn seems to have hit the right balance with the ARM.</P>
+<P class=3DMain-Paragraph>There is an illustration of the programmer's =
+model=20
+overleaf.</P>
+<P class=3DMain-Paragraph>In the diagram, 'undedicated' means that the =
+hardware=20
+imposes no particular use for the register. 'Dedicated' means that the =
+ARM uses=20
+the register for a particular function - R15 is the PC. 'Semi-dedicated' =
+implies=20
+that occasionally the hardware might use the register for some function =
+(for=20
+storing addresses), but at other times it is undedicated. 'General =
+purpose'=20
+indicates that if an instruction requires a register as an operand, any =
+register=20
+may be specified.</P>
+<P class=3DParagraph-no-space>As R0-R13 are undedicated, general purpose =
+
+registers, nothing more needs to be said about them at this stage.</P>
+<P class=3DParagraph-no-space></P>
+<DIV align=3Dleft>
+<TABLE border=3D1 cellSpacing=3D0 cellPadding=3D2>
+  <TBODY>
+  <TR>
+    <TD align=3Dmiddle>R0</TD>
+    <TD align=3Dleft>Undedicated, general purpose</TD></TR>
+  <TR>
+    <TD align=3Dmiddle>R1</TD>
+    <TD align=3Dleft>Undedicated, general purpose</TD></TR>
+  <TR>
+    <TD align=3Dmiddle>R2</TD>
+    <TD align=3Dleft>Undedicated, general purpose</TD></TR>
+  <TR>
+    <TD align=3Dmiddle>R3</TD>
+    <TD align=3Dleft>Undedicated, general purpose</TD></TR>
+  <TR>
+    <TD align=3Dmiddle>R4</TD>
+    <TD align=3Dleft>Undedicated, general purpose</TD></TR>
+  <TR>
+    <TD align=3Dmiddle>R5</TD>
+    <TD align=3Dleft>Undedicated, general purpose</TD></TR>
+  <TR>
+    <TD align=3Dmiddle>R6</TD>
+    <TD align=3Dleft>Undedicated, general purpose</TD></TR>
+  <TR>
+    <TD align=3Dmiddle>R7</TD>
+    <TD align=3Dleft>Undedicated, general purpose</TD></TR>
+  <TR>
+    <TD align=3Dmiddle>R8</TD>
+    <TD align=3Dleft>Undedicated, general purpose</TD></TR>
+  <TR>
+    <TD align=3Dmiddle>R9</TD>
+    <TD align=3Dleft>Undedicated, general purpose</TD></TR>
+  <TR>
+    <TD align=3Dmiddle>R10</TD>
+    <TD align=3Dleft>Undedicated, general purpose</TD></TR>
+  <TR>
+    <TD align=3Dmiddle>R11</TD>
+    <TD align=3Dleft>Undedicated, general purpose</TD></TR>
+  <TR>
+    <TD align=3Dmiddle>R12</TD>
+    <TD align=3Dleft>Undedicated, general purpose</TD></TR>
+  <TR>
+    <TD align=3Dmiddle>R13</TD>
+    <TD align=3Dleft>Undedicated, general purpose</TD></TR>
+  <TR>
+    <TD align=3Dmiddle>R14</TD>
+    <TD align=3Dleft>Semi-dedicated, general purpose (link)</TD></TR>
+  <TR>
+    <TD align=3Dmiddle>R15</TD>
+    <TD align=3Dleft>Dedicated, general purpose =
+(PC)</TD></TR></TBODY></TABLE></DIV>
+<P class=3DParagraph-no-space></P>
+<P class=3DHeading-3>Special registers</P>
+<P class=3DMain-Paragraph>Being slightly different from the rest, R14 =
+and R15 are=20
+more interesting, especially R15. This is the only register which you =
+cannot use=20
+in the same way as the rest to hold operands and results. The reason is =
+that the=20
+ARM uses it to store the program counter and status register. These two=20
+components of R15 are explained below.</P>
+<P class=3DMain-Paragraph>Register 14 is usually free to hold any value =
+the user=20
+wishes. However, one instruction, 'branch with link', uses R14 to keep a =
+copy of=20
+the PC. The next chapter describes branch with link, along with the rest =
+of the=20
+instruction set, and this use of R14 is explained in more detail =
+there.</P>
+<P class=3DHeading-3>The program counter</P>
+<P class=3DParagraph-no-space>R15 is split into two parts. This is =
+illustrated=20
+below: </P>
+<P class=3DParagraph-no-space></P>
+<P class=3DParagraph-no-space>
+<SCRIPT language=3Djavascript>=0A=
+regTable([[31, 31, "N"], [30, 30, "Z"], [29, 29, "C"], [28, 28, "V"], =
+[27, 27, "I"], [26, 26, "F"], [25, 2, "Program Counter"], [1, 1, "S1"], =
+[0, 0, "S0"]]);=0A=
+</SCRIPT>
+</P>
+<P class=3DParagraph-no-space></P>
+<P class=3DParagraph-no-space>Bits 2 to 25 are the program counter (PC). =
+That is,=20
+they hold the word address of the next instruction to be fetched. There =
+are only=20
+24 bits (as opposed to the full 26) because instructions are defined to =
+reside=20
+on word boundaries. Thus the two lowest bits of an instruction's address =
+are=20
+always zero, and there is no need to store them. When R15 is used to =
+place the=20
+address of the next instruction on the address bus, bits 0 and 1 of the =
+bus are=20
+automatically set to zero.</P>
+<P class=3DMain-Paragraph>When the ARM is reset, the program counter is =
+set to=20
+zero, and instructions are fetched starting from that location. =
+Normally, the=20
+program counter is incremented after every instruction is fetched, so =
+that a=20
+program is executed in sequence. However, some instructions alter the =
+value of=20
+the PC, causing non-consecutive instructions to be fetched. This is how =
+<SPAN=20
+class=3Dcomputer>IF-THEN-ELSE</SPAN> and <SPAN =
+class=3Dcomputer>REPEAT-UNTIL</SPAN>=20
+type constructs are programmed in machine code.</P>
+<P class=3DMain-Paragraph>Some signals connected to the ARM chip also =
+affect the=20
+PC when they are activated. Reset is one such signal, and as mentioned =
+above it=20
+causes the PC to jump to location zero. Others are IRQ and FIQ, which =
+are=20
+mentioned below, and memory abort.</P>
+<P class=3DHeading-3>Status register</P>
+<P class=3DMain-Paragraph>The remaining bits of R15, bits 0, 1 and =
+26-31, form an=20
+eight-bit status register. This contains information about the state of =
+the=20
+processor. There are two types of status information: result status and =
+system=20
+status. The former refers to the outcome of previous operations, for =
+example,=20
+whether a carry was generated by an addition operation. The latter =
+refers to the=20
+four operating modes in which the ARM may be set, and whether certain =
+events are=20
+allowed to interrupt its processing.</P>
+<P class=3DMain-Paragraph>Here is the layout of the status register =
+portion of=20
+R15:</P>
+<DIV align=3Dleft>
+<TABLE border=3D1 cellSpacing=3D0 cellPadding=3D2>
+  <TBODY>
+  <TR>
+    <TD>
+      <P class=3DHeading-4>Type</P></TD>
+    <TD align=3Dright>
+      <P class=3DHeading-4>Bit</P></TD>
+    <TD align=3Dmiddle>
+      <P class=3DHeading-4>Name</P></TD>
+    <TD>
+      <P class=3DHeading-4>Meaning</P></TD></TR>
+  <TR>
+    <TD rowSpan=3D2>Result</TD>
+    <TD align=3Dright>31</TD>
+    <TD align=3Dmiddle>N</TD>
+    <TD>Negative result flag</TD></TR>
+  <TR>
+    <TD align=3Dright>30</TD>
+    <TD align=3Dmiddle>Z</TD>
+    <TD>Zero result flag</TD></TR>
+  <TR>
+    <TD rowSpan=3D2>Status</TD>
+    <TD align=3Dright>29</TD>
+    <TD align=3Dmiddle>C</TD>
+    <TD>Carry flag</TD></TR>
+  <TR>
+    <TD align=3Dright>28</TD>
+    <TD align=3Dmiddle>V</TD>
+    <TD>Overflowed result flag</TD></TR>
+  <TR>
+    <TD rowSpan=3D2>System</TD>
+    <TD align=3Dright>27</TD>
+    <TD align=3Dmiddle>IRQ</TD>
+    <TD>Interrupt disable flag</TD></TR>
+  <TR>
+    <TD align=3Dright>26</TD>
+    <TD align=3Dmiddle>FIQ</TD>
+    <TD>Fast interrupt disable flag</TD></TR>
+  <TR>
+    <TD rowSpan=3D2>Status</TD>
+    <TD align=3Dright>1</TD>
+    <TD align=3Dmiddle>S1</TD>
+    <TD>Processor mode 1</TD></TR>
+  <TR>
+    <TD align=3Dright>0</TD>
+    <TD align=3Dmiddle>S0</TD>
+    <TD>Processor mode 0</TD></TR></TBODY></TABLE></DIV>
+<P></P>
+<P class=3DMain-Paragraph>The result status flags are affected by the=20
+register-to-register data operations. The exact way in which these =
+instructions=20
+change the flags is described along with the instructions. No other =
+instructions=20
+affect the flags, unless they are loaded explicitly (along with the rest =
+of R15)=20
+from memory.</P>
+<P class=3DMain-Paragraph>As each flag is stored in one bit, it has two =
+possible=20
+states. If a flag bit has the value 1, it is said to be true, or set. If =
+it has=20
+the value 0, the flag is false or cleared. For example, if bits 31 to 28 =
+of R15=20
+were 1100, the N and Z flags would be set, and V and C would be =
+cleared.</P>
+<P class=3DMain-Paragraph>All instructions may execute conditionally on =
+the result=20
+flags. That is to say, a given instruction may be executed only if a =
+given=20
+combination of flags exists, otherwise the instruction is ignored. =
+Additionally,=20
+an instruction may be unconditional, so that it executes regardless of =
+the state=20
+of the flags.</P>
+<P class=3DMain-Paragraph>The processor mode flags hold a two-bit =
+number. The=20
+state of these two bits determine the 'mode' in which the ARM executes, =
+as=20
+follows:</P>
+<DIV align=3Dleft>
+<TABLE border=3D1 cellSpacing=3D0 cellPadding=3D1 width=3D180>
+  <TBODY>
+  <TR>
+    <TD align=3Dmiddle>
+      <P class=3DHeading-4>s1</P></TD>
+    <TD align=3Dmiddle>
+      <P class=3DHeading-4>s0</P></TD>
+    <TD>
+      <P class=3DHeading-4>Mode</P></TD></TR>
+  <TR>
+    <TD align=3Dmiddle>0</TD>
+    <TD align=3Dmiddle>0</TD>
+    <TD>User</TD></TR>
+  <TR>
+    <TD align=3Dmiddle>0</TD>
+    <TD align=3Dmiddle>1</TD>
+    <TD>FIQ or fast interrupt</TD></TR>
+  <TR>
+    <TD align=3Dmiddle>1</TD>
+    <TD align=3Dmiddle>0</TD>
+    <TD>IRQ or interrupt</TD></TR>
+  <TR>
+    <TD align=3Dmiddle>1</TD>
+    <TD align=3Dmiddle>1</TD>
+    <TD>SVC or supervisor</TD></TR></TBODY></TABLE></DIV>
+<P class=3DMain-Paragraph>The greater part of this book is concerned =
+only with=20
+user mode. The other modes are 'system' modes which are only required by =
+
+programs which will have generally already been written on the machine =
+you are=20
+using. Briefly, supervisor mode is entered when the ARM is reset or =
+certain=20
+types of error occur. IRQ and FIQ modes are entered under the interrupt=20
+conditions described below.</P>
+<P class=3DMain-Paragraph>In non-user modes, the ARM looks and behaves =
+in a very=20
+similar way to user mode (which we have been describing). The main =
+difference is=20
+that certain registers (e.g. R13 and R14 in supervisor mode) are =
+replaced by=20
+'private copies' available only in that mode. These are called R13_SVC =
+and=20
+R14_SVC. In user mode, the supervisor mode's versions of R13 and R14 are =
+not=20
+visible, and vice versa. In addition, S0 and S1 may not be altered in =
+user mode,=20
+but may be in other modes. In IRQ mode, the extra registers are R13_IRQ =
+and=20
+R14_IRQ; in FIQ mode there are seven of them - R8_FIQ to R14_FIQ.</P>
+<P class=3DMain-Paragraph>Non-user modes are used by 'privileged' =
+programs which=20
+may have access to hardware which the user is not allowed to touch. This =
+is=20
+possible because a signal from the ARM reflects the state of S0 and S1 =
+so=20
+external hardware may determine if the processor is in a user mode or =
+not.</P>
+<P class=3DMain-Paragraph>Finally, the status bits FIQ and IRQ are used =
+to enable=20
+or disable the two interrupts provided by the processor. An interrupt is =
+a=20
+signal to the chip which, when activated, causes the ARM to suspend its =
+current=20
+action (having finished the current instruction) and set the program =
+counter to=20
+a pre-determined value. Hardware such as disc drives use interrupts to =
+ask for=20
+attention when they require servicing.</P>
+<P class=3DMain-Paragraph>The ARM provides two interrupts. The IRQ =
+(which stands=20
+for interrupt request) signal will cause the program to be suspended =
+only if the=20
+IRQ bit in the status register is cleared. If that bit is set, the =
+interrupt=20
+will be ignored by the processor until it is clear. The FIQ (fast =
+interrupt)=20
+works similarly, except that the FIQ bit enables/disables it. If a FIQ =
+interrupt=20
+is activated, the IRQ bit is set automatically, disabling any IRQ =
+signal. The=20
+reverse is not true however, and a FIQ interrupt may be processed while =
+an IRQ=20
+is active.</P>
+<P class=3DMain-Paragraph>As mentioned above, the supervisor, FIQ and =
+IRQ modes=20
+are rarely of interest to programmers other than those writing 'systems' =
+
+software, and the system status bits of R15 may generally be ignored. =
+Chapter=20
+Seven covers the differences in programming the ARM in the non-user =
+modes.</P>
+<P class=3DHeading-2>2.3 The instructions set</P>
+<P class=3DMain-Paragraph>To complement the regular architecture of the=20
+programmer's model, the ARM has a well-organised, uniform instruction =
+set. In=20
+this section we give an overview of the instruction types, and defer =
+detailed=20
+descriptions until the next chapter.</P>
+<P class=3DHeading-3>General properties</P>
+<P class=3DMain-Paragraph>There are certain attributes that all =
+instructions have=20
+in common. All instructions are 32-bits long (i.e. they occupy one word) =
+and=20
+must lie on word boundaries. We have already seen that the address held =
+in the=20
+program counter is a word address, and the two lowest bits of the =
+address are=20
+set to zero when an instruction is fetched from memory.</P>
+<P class=3DMain-Paragraph>The main reason for imposing the word-boundary =
+
+restriction is one of efficiency. If an instruction were allowed to =
+straddle two=20
+words, two accesses to memory would be required to load a single =
+instruction. As=20
+it is, the ARM only ever has to access memory once per instruction =
+fetch. A=20
+secondary reason is that by making the two lowest bits of the address =
+implicit,=20
+the program address range of the ARM is increased from the 24 bits =
+available in=20
+R15 to 26 bits - effectively quadrupling the addressing range.</P>
+<P class=3DMain-Paragraph>A 32-bit instruction enables 2<SPAN =
+class=3DH>32</SPAN> or=20
+about 4 billion possible instructions. Obviously the ARM would not be =
+much of a=20
+reduced instruction set computer if it used all of these for wildly =
+differing=20
+instructions. However, it does use a surprisingly large amount of this=20
+theoretical instruction space.</P>
+<P class=3DMain-Paragraph>The instruction word may be split into =
+different=20
+'fields'. A field is a set of (perhaps just one) contiguous bits. For =
+example,=20
+bits 28 to 31 of R15 could be called the result status field. Each =
+instruction=20
+word field controls a particular aspect of the interpretation of the=20
+instruction. It is not necessary to know where these fields occur within =
+the=20
+word and what they mean, as the assembler does that for you using the =
+textual=20
+representation of instruction.</P>
+<P class=3DMain-Paragraph>One field which is worth mentioning now is the =
+condition=20
+part. Every ARM instruction has a condition code encoded into four bits =
+of the=20
+word. Four bits enable up to 16 conditions to be specified, and all of =
+these are=20
+used. Most instructions will use the 'unconditional' condition, i.e. =
+they will=20
+execute regardless of the state of the flags. Other conditions are 'if =
+zero',=20
+'if carry set', 'if less than' and so on.</P>
+<P class=3DHeading-3>Instruction classes</P>
+<P class=3DMain-Paragraph>There are five types of instruction. Each =
+class is=20
+described in detail in its own section of the next chapter. In summary, =
+they=20
+are:</P>
+<P class=3DHeading-4>Data operations</P>
+<P class=3DMain-Paragraph>This group does most of the work. There are =
+sixteen=20
+instructions, and they have very similar formats. Examples of =
+instructions from=20
+this group are <SPAN class=3Dcomputer>ADD</SPAN> and <SPAN=20
+class=3Dcomputer>CMP</SPAN>, which add and compare two numbers =
+respectively. As=20
+mentioned above, the operands of these instructions are always in =
+registers (or=20
+an <SPAN class=3DItalic>immediate</SPAN> number stored in the =
+instruction itself),=20
+never in memory.</P>
+<P class=3DHeading-4>Load and save</P>
+<P class=3DMain-Paragraph>This is a smaller group of two instructions: =
+load a=20
+register and save a register. Variations include whether bytes or words =
+are=20
+transferred, and how the memory location to be used is obtained.</P>
+<P class=3DHeading-4>Multiple load and save</P>
+<P class=3DMain-Paragraph>Whereas the instructions in the previous group =
+only=20
+transfer a single register, this group allows between one and 16 =
+registers to be=20
+moved between the processor and memory. Only word transfers are =
+performed by=20
+this group.</P>
+<P class=3DHeading-4>Branching</P>
+<P class=3DMain-Paragraph>Although the PC may be altered using the data =
+operations=20
+to cause a change in the program counter, the branch instruction =
+provides a=20
+convenient way of reaching any part of the 64M byte address space in a =
+single=20
+instruction. It causes a <SPAN class=3DItalic>displacement</SPAN> to be =
+added to=20
+the current value of the PC. The displacement is stored in the =
+instruction=20
+itself.</P>
+<P class=3DHeading-4>SWI</P>
+<P class=3DMain-Paragraph>This one-instruction group is very important. =
+The=20
+abbreviation stands for 'SoftWare Interrupt'. It provides the way for =
+user's=20
+programs to access the facilities provided by the operating system. All=20
+ARM-based computers provide a certain amount of pre-written software to =
+perform=20
+such tasks as printing characters on to the screen, performing disc I/O =
+etc. By=20
+issuing <SPAN class=3Dcomputer>SWI</SPAN> instructions, the user's =
+program may=20
+utilise this operating system software, obviating the need to write the =
+routines=20
+for each application.</P>
+<P class=3DHeading-4>Floating point</P>
+<P class=3DMain-Paragraph>The first ARM chips do not provide any =
+built-in support=20
+for dealing with floating point, or real, numbers. Instead, they have a =
+facility=20
+for adding co-processors. A co-processor is a separate chip which =
+executes=20
+special-purpose instructions which the ARM CPU alone cannot handle. The =
+first=20
+such processor will be one to implement floating point instructions. =
+These=20
+instructions have already been defined, and are currently implemented by =
+
+software. The machine codes which are allocated to them are illegal =
+instructions=20
+on the ARM-I so system software can be used to 'trap' them and perform =
+the=20
+required action, albeit a lot slower than the co-processor would.</P>
+<P class=3DMain-Paragraph>Because the floating point instructions are =
+not part of=20
+the basic ARM instruction set, they are not discussed in the main part =
+of this=20
+book, but are described in Appendix B.</P>
+<P class=3DMain-Paragraph></P></BODY></HTML>
+
+------=_NextPart_000_0000_01CD4739.CBDA1EF0
+Content-Type: image/jpeg
+Content-Transfer-Encoding: base64
+Content-Location: http://www.peter-cockerell.net/aalp/html/images/fig2-1-hi.jpg
+
+/9j/4AAQSkZJRgABAgEBLAEsAAD/7Q10UGhvdG9zaG9wIDMuMAA4QklNA+0AAAAAABABLAAAAAEA
+AQEsAAAAAQABOEJJTQQNAAAAAAAEAAAAHjhCSU0EGQAAAAAABAAAAB44QklNA/MAAAAAAAkAAAAA
+AAAAAAEAOEJJTQQKAAAAAAABAAA4QklNJxAAAAAAAAoAAQAAAAAAAAACOEJJTQP1AAAAAABIAC9m
+ZgABAGxmZgAGAAAAAAABAC9mZgABAKGZmgAGAAAAAAABADIAAAABAFoAAAAGAAAAAAABADUAAAAB
+AC0AAAAGAAAAAAABOEJJTQP4AAAAAABwAAD/////////////////////////////A+gAAAAA////
+/////////////////////////wPoAAAAAP////////////////////////////8D6AAAAAD/////
+////////////////////////A+gAADhCSU0ECAAAAAAAEAAAAAEAAAJAAAACQAAAAAA4QklNBB4A
+AAAAAAQAAAAAOEJJTQQaAAAAAABzAAAABgAAAAAAAAAAAAABSgAAAp4AAAAJAGYAaQBnADIALQAx
+AC0AaABpAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAKeAAABSgAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4QklNBBQAAAAAAAQAAAACOEJJTQQMAAAAAArfAAAAAQAA
+AHAAAAA3AAABUAAASDAAAArDABgAAf/Y/+AAEEpGSUYAAQIBAEgASAAA/+4ADkFkb2JlAGSAAAAA
+Af/bAIQADAgICAkIDAkJDBELCgsRFQ8MDA8VGBMTFRMTGBEMDAwMDAwRDAwMDAwMDAwMDAwMDAwM
+DAwMDAwMDAwMDAwMDAENCwsNDg0QDg4QFA4ODhQUDg4ODhQRDAwMDAwREQwMDAwMDBEMDAwMDAwM
+DAwMDAwMDAwMDAwMDAwMDAwMDAwM/8AAEQgANwBwAwEiAAIRAQMRAf/dAAQAB//EAT8AAAEFAQEB
+AQEBAAAAAAAAAAMAAQIEBQYHCAkKCwEAAQUBAQEBAQEAAAAAAAAAAQACAwQFBgcICQoLEAABBAED
+AgQCBQcGCAUDDDMBAAIRAwQhEjEFQVFhEyJxgTIGFJGhsUIjJBVSwWIzNHKC0UMHJZJT8OHxY3M1
+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
+AAAAFGJrcHQAAAIEAAAAFHJYWVoAAAIYAAAAFGdYWVoAAAIsAAAAFGJYWVoAAAJAAAAAFGRtbmQA
+AAJUAAAAcGRtZGQAAALEAAAAiHZ1ZWQAAANMAAAAhnZpZXcAAAPUAAAAJGx1bWkAAAP4AAAAFG1l
+YXMAAAQMAAAAJHRlY2gAAAQwAAAADHJUUkMAAAQ8AAAIDGdUUkMAAAQ8AAAIDGJUUkMAAAQ8AAAI
+DHRleHQAAAAAQ29weXJpZ2h0IChjKSAxOTk4IEhld2xldHQtUGFja2FyZCBDb21wYW55AABkZXNj
+AAAAAAAAABJzUkdCIElFQzYxOTY2LTIuMQAAAAAAAAAAAAAAEnNSR0IgSUVDNjE5NjYtMi4xAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABYWVogAAAAAAAA
+81EAAQAAAAEWzFhZWiAAAAAAAAAAAAAAAAAAAAAAWFlaIAAAAAAAAG+iAAA49QAAA5BYWVogAAAA
+AAAAYpkAALeFAAAY2lhZWiAAAAAAAAAkoAAAD4QAALbPZGVzYwAAAAAAAAAWSUVDIGh0dHA6Ly93
+d3cuaWVjLmNoAAAAAAAAAAAAAAAWSUVDIGh0dHA6Ly93d3cuaWVjLmNoAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGRlc2MAAAAAAAAALklFQyA2MTk2Ni0yLjEg
+RGVmYXVsdCBSR0IgY29sb3VyIHNwYWNlIC0gc1JHQgAAAAAAAAAAAAAALklFQyA2MTk2Ni0yLjEg
+RGVmYXVsdCBSR0IgY29sb3VyIHNwYWNlIC0gc1JHQgAAAAAAAAAAAAAAAAAAAAAAAAAAAABkZXNj
+AAAAAAAAACxSZWZlcmVuY2UgVmlld2luZyBDb25kaXRpb24gaW4gSUVDNjE5NjYtMi4xAAAAAAAA
+AAAAAAAsUmVmZXJlbmNlIFZpZXdpbmcgQ29uZGl0aW9uIGluIElFQzYxOTY2LTIuMQAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAdmlldwAAAAAAE6T+ABRfLgAQzxQAA+3MAAQTCwADXJ4AAAABWFla
+IAAAAAAATAlWAFAAAABXH+dtZWFzAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAACjwAAAAJzaWcg
+AAAAAENSVCBjdXJ2AAAAAAAABAAAAAAFAAoADwAUABkAHgAjACgALQAyADcAOwBAAEUASgBPAFQA
+WQBeAGMAaABtAHIAdwB8AIEAhgCLAJAAlQCaAJ8ApACpAK4AsgC3ALwAwQDGAMsA0ADVANsA4ADl
+AOsA8AD2APsBAQEHAQ0BEwEZAR8BJQErATIBOAE+AUUBTAFSAVkBYAFnAW4BdQF8AYMBiwGSAZoB
+oQGpAbEBuQHBAckB0QHZAeEB6QHyAfoCAwIMAhQCHQImAi8COAJBAksCVAJdAmcCcQJ6AoQCjgKY
+AqICrAK2AsECywLVAuAC6wL1AwADCwMWAyEDLQM4A0MDTwNaA2YDcgN+A4oDlgOiA64DugPHA9MD
+4APsA/kEBgQTBCAELQQ7BEgEVQRjBHEEfgSMBJoEqAS2BMQE0wThBPAE/gUNBRwFKwU6BUkFWAVn
+BXcFhgWWBaYFtQXFBdUF5QX2BgYGFgYnBjcGSAZZBmoGewaMBp0GrwbABtEG4wb1BwcHGQcrBz0H
+TwdhB3QHhgeZB6wHvwfSB+UH+AgLCB8IMghGCFoIbgiCCJYIqgi+CNII5wj7CRAJJQk6CU8JZAl5
+CY8JpAm6Cc8J5Qn7ChEKJwo9ClQKagqBCpgKrgrFCtwK8wsLCyILOQtRC2kLgAuYC7ALyAvhC/kM
+EgwqDEMMXAx1DI4MpwzADNkM8w0NDSYNQA1aDXQNjg2pDcMN3g34DhMOLg5JDmQOfw6bDrYO0g7u
+DwkPJQ9BD14Peg+WD7MPzw/sEAkQJhBDEGEQfhCbELkQ1xD1ERMRMRFPEW0RjBGqEckR6BIHEiYS
+RRJkEoQSoxLDEuMTAxMjE0MTYxODE6QTxRPlFAYUJxRJFGoUixStFM4U8BUSFTQVVhV4FZsVvRXg
+FgMWJhZJFmwWjxayFtYW+hcdF0EXZReJF64X0hf3GBsYQBhlGIoYrxjVGPoZIBlFGWsZkRm3Gd0a
+BBoqGlEadxqeGsUa7BsUGzsbYxuKG7Ib2hwCHCocUhx7HKMczBz1HR4dRx1wHZkdwx3sHhYeQB5q
+HpQevh7pHxMfPh9pH5Qfvx/qIBUgQSBsIJggxCDwIRwhSCF1IaEhziH7IiciVSKCIq8i3SMKIzgj
+ZiOUI8Ij8CQfJE0kfCSrJNolCSU4JWgllyXHJfcmJyZXJocmtyboJxgnSSd6J6sn3CgNKD8ocSii
+KNQpBik4KWspnSnQKgIqNSpoKpsqzysCKzYraSudK9EsBSw5LG4soizXLQwtQS12Last4S4WLkwu
+gi63Lu4vJC9aL5Evxy/+MDUwbDCkMNsxEjFKMYIxujHyMioyYzKbMtQzDTNGM38zuDPxNCs0ZTSe
+NNg1EzVNNYc1wjX9Njc2cjauNuk3JDdgN5w31zgUOFA4jDjIOQU5Qjl/Obw5+To2OnQ6sjrvOy07
+azuqO+g8JzxlPKQ84z0iPWE9oT3gPiA+YD6gPuA/IT9hP6I/4kAjQGRApkDnQSlBakGsQe5CMEJy
+QrVC90M6Q31DwEQDREdEikTORRJFVUWaRd5GIkZnRqtG8Ec1R3tHwEgFSEtIkUjXSR1JY0mpSfBK
+N0p9SsRLDEtTS5pL4kwqTHJMuk0CTUpNk03cTiVObk63TwBPSU+TT91QJ1BxULtRBlFQUZtR5lIx
+UnxSx1MTU19TqlP2VEJUj1TbVShVdVXCVg9WXFapVvdXRFeSV+BYL1h9WMtZGllpWbhaB1pWWqZa
+9VtFW5Vb5Vw1XIZc1l0nXXhdyV4aXmxevV8PX2Ffs2AFYFdgqmD8YU9homH1YklinGLwY0Njl2Pr
+ZEBklGTpZT1lkmXnZj1mkmboZz1nk2fpaD9olmjsaUNpmmnxakhqn2r3a09rp2v/bFdsr20IbWBt
+uW4SbmtuxG8eb3hv0XArcIZw4HE6cZVx8HJLcqZzAXNdc7h0FHRwdMx1KHWFdeF2Pnabdvh3Vnez
+eBF4bnjMeSp5iXnnekZ6pXsEe2N7wnwhfIF84X1BfaF+AX5ifsJ/I3+Ef+WAR4CogQqBa4HNgjCC
+koL0g1eDuoQdhICE44VHhauGDoZyhteHO4efiASIaYjOiTOJmYn+imSKyoswi5aL/IxjjMqNMY2Y
+jf+OZo7OjzaPnpAGkG6Q1pE/kaiSEZJ6kuOTTZO2lCCUipT0lV+VyZY0lp+XCpd1l+CYTJi4mSSZ
+kJn8mmia1ZtCm6+cHJyJnPedZJ3SnkCerp8dn4uf+qBpoNihR6G2oiailqMGo3aj5qRWpMelOKWp
+phqmi6b9p26n4KhSqMSpN6mpqhyqj6sCq3Wr6axcrNCtRK24ri2uoa8Wr4uwALB1sOqxYLHWskuy
+wrM4s660JbSctRO1irYBtnm28Ldot+C4WbjRuUq5wro7urW7LrunvCG8m70VvY++Cr6Evv+/er/1
+wHDA7MFnwePCX8Lbw1jD1MRRxM7FS8XIxkbGw8dBx7/IPci8yTrJuco4yrfLNsu2zDXMtc01zbXO
+Ns62zzfPuNA50LrRPNG+0j/SwdNE08bUSdTL1U7V0dZV1tjXXNfg2GTY6Nls2fHadtr724DcBdyK
+3RDdlt4c3qLfKd+v4DbgveFE4cziU+Lb42Pj6+Rz5PzlhOYN5pbnH+ep6DLovOlG6dDqW+rl63Dr
+++yG7RHtnO4o7rTvQO/M8Fjw5fFy8f/yjPMZ86f0NPTC9VD13vZt9vv3ivgZ+Kj5OPnH+lf65/t3
+/Af8mP0p/br+S/7c/23////uACFBZG9iZQBkQAAAAAEDABADAgMGAAAAAAAAAAAAAAAA/9sAhAAE
+AwMDAwMEAwMEBgQDBAYHBQQEBQcIBgYHBgYICggJCQkJCAoKDAwMDAwKDAwMDAwMDAwMDAwMDAwM
+DAwMDAwMAQQFBQgHCA8KCg8UDg4OFBQODg4OFBEMDAwMDBERDAwMDAwMEQwMDAwMDAwMDAwMDAwM
+DAwMDAwMDAwMDAwMDAz/wgARCAFKAp4DAREAAhEBAxEB/8QAxwABAAMBAQEBAQAAAAAAAAAAAAYH
+CAUEAwIBAQEAAAAAAAAAAAAAAAAAAAAAEAABAwMDBAMBAAEDAwUAAAAGBAUHAAMIAQIYEDAWODYX
+N0AgERITULAUYIAxFTURAAEEAQMABAcJDAgDBgILAAIBAwQFBgAREiEiEwcQMTIUtHU3MEFRkdFC
+lBWVIGGx0iPj1DUWNpYIQHFSYnKydneBM0OhYyQ0RBdQU2CAgqJzs1R0JVW1EgEAAAAAAAAAAAAA
+AAAAAACw/9oADAMBAQIRAxEAAADfwAAAAAIsSg/pHCQn6AB+TyHsPmfUAAAAAAAAAAAAAAAAAAAA
+AAjJIj6EcJCfoA8R7QAAAAAAACpzkEuOeQYtsl4BxDPJeZDy3gAAAAAAAAAAAAAAAAAAAAACtiHk
+6OMRMs0m4KEJAW2AAAAAAACpjjEgIYS86pYIBHyqixytCzzokXLBK8LDK8LDK+JWcg8hLSEFhFeF
+hleE+IMdo+pHyeFflhleFhlfExI4fs7pECwivCwyvCwSAElPIcompBDxkVJQQQnZ6CyAUkSssIAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+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
+izrHeqoHYoclZKFSJGuQMrsrqCyemfniM59IDuRA2cSU1DfOt7WzBs1RmjTj0pLwhsZMmWsdcIgK
+mWFy4InSSmFNY2JU9SGEFK4jAAgsTFPXJ31+in8uMbRRfHo6jvIqJAuMgTeAsMOBLe8yTLAOskEO
+arGQzi5FYMbt5mNJZyWv1b9N2u1Vayb3W49C0MdhVZj/AJtUtxlKZ+brQeYpGv5IapfraMwi2ACL
+6GyiPyGxjZm8j7Qx5FBzaGIC9vZqmsVlExZRgMm9oUdJy9gaJIzm1xl1mB5HKi/IdqvEDqODzSJs
+KAMmgDd3OPn4zjjbtyf0tMKR2QM1G2sqf8sKBkxx2y9MQvjlSbGUtmck6hEsn7tkjt/5Q+PgtBH4
+i4hkrix4jDicnDETfkuwIxFCTt7HUoAyo5YmQLkskNqO/g+Jnrp/Pk76/RT+XdC4MGTxoBYxBIzT
+dnMf826lMCRGaviZPZSJ+zOXsD12Y+w7sI+1iF8c6kGP0PFT7pppt07B38HxM9dP58nfX4BJ8t7Q
+L5VmVXlWZVeVZlV5VmVXlWZVeVZlV5VmVXlWZVeVZlV5VmVXlWZVeVZlV5VmVWSL/kotCfKsya8q
+zKryrMqvKsyq8qzKryrMqvKsyq8qzKryrMqvKsyq8qzKryrMqvKsyq8qzKqUn7JNRL3lWZVeVZlV
+5VmVXlWZVeVZlV5VmVXlWZVeVZlV5VmVXlWZVeVZlV5VmVXlWZVeVZk1js/ZJo2XyrMqvKsyq8qz
+KryrMqvKsyq8qzKryrMqvKsyq8qzKryrMqvKsyq8qzKryrMqiony8uC+JWu/XHP+fJ31+in8u7uY
+/wCbd6cvYHvYhfHO6d/B8TPXT+fJ31+in8u7uY/5t3py9ge9iF8c7p38HxM9dP58nfX6Kfy6nB6Z
+2nf28x/zbvTl7A97EL453Tv4PiZ66dSC2/XWePpjk6+dE5UOhbLJssjz1vNpFDI7SMx8gdpn0l+N
+9TNimqMSYoJZ3iwSeGEjYihmvZLwmnvpjkUUhvJ6E9mnSRDZMBjcJGRSchXXJ31+in8urLNAP6Q+
+pl6UETYRzW8NRDK0lvUe3D06ltumgJfTZ7tOEoGr29R7IW401qRxl2MQiaInYgwJaUGrW15j/m1S
+Y/KwGWxWc4uM3llmKNSItfJdjkbLEOU0dWT4WKmA0ZXfImHWNyQL0TqiqQTptjwaHUk/OLn0nL2B
+pwN08XTaJTFHRxuBpcjqSlGk0RjuKgjLOMXhMkeWxc0JskIXVr+kpFsgNhcGpJfsOPTEL45rp/ro
+Hyg1ReTNUxRs9DARIYZJDVYyCiRybI5ypjIlEnx9ZhlpHJ6ioqeeklnF8NaIZMXc/jOjv4PiZ66d
+ZfONY/j9fG8+JodfzgbNn3Lp1DdgqiVNCXJqRHcMu5TZANA+WFadI2aIoCZJYWR6BMjMJCAUmlC1
+GDo7g79ilKi6VGmN017/AMhPRizzDtlnFh3MFrL1yd9fop/LqyvWrr8VrsgNyxlTQ1prAsH3iCVn
+SWlaoTksQlRCcu6cAjAAdIPZgNG59HNsczCeqzH/ADaskF4WjkLJFYzrgiVtngBbFFi6ekgMqTWJ
+9NX/AEfwaJWSSF0YQGxIBkFrJVGtu2lzJdiWQek5ewNFDmDJMwJQvti+XjF+bYHkWGRl4QtMBL0V
+pFkQ82CmC3ISkp8CosS2EEcVIcfAkgvg41N8bzf0xC+OVGLoD7Mn0yhtcsnF5epx+dQQG8Bj7HZ9
+ZU2PeQ626+JJNBpDdw6xu/32adGyamyUsRnMmWRHR38HxM9dOpjGwFINKwMNXijVFEasg+3wHDDU
+3OsWx0+DOyCIc2ND5BcPEzsJBAiBtxXCkTnDogBw9pHlGOsGKlT2JDRI0tcCw0yvnQhHWMsZxGK4
+4AVfXJ31+in8u6yuEyEctQAOLxAO7GY/5tTnGMevRAIw5FoG5Tw6yWRImqxZTNpnFMcSHeGxMYDm
+59gWGiV4aWdpYUFOLa3vCEOiGM4/X9Jy9gaWQ3FTgoDIzAY7tHK+RT05onhSJjN5bmVoZ27jxB3/
+ANmnT2EtmjCNgGQLYbHYPHqTpiF8c10010uQHC9xoHxMZj1gZFEgnM10qgWGFz6rZmle1s2P8Kj7
+j0KBEZNmoOjcCj7od/B8TPXT+fJ31+i1+Y7UZeQsFeQsFeQsFeQsFeQsFeQsFeQsFeQsFeQsFeQs
+FeQsFeQsFeQsFZgPDSqjjyFgryFgryFgryFgryFgryFgryFgryFgryFgryFgryFgryFgryFgryFg
+qbndpvT55CwV5CwV5CwV5CwV5CwV5CwV5CwV5CwV5CwV5CwV5CwV5CwV5CwV5CwViS7tKUd8hYK8
+hYK8hYK8hYK8hYK8hYK8hYK8hYK8hYK8hYK8hYK8hYK8hYKOX5juBWJn+nHT+fJ31+j7EbHh6AeG
+eNdcM8a64Z411wzxrrhnjXXDPGuuGeNdcM8a64Z411wzxrrhnjXXDPGuuGeNdZMY0wkBg/DPGuuG
+eNdcM8a64Z411wzxrrhnjXXDPGuuGeNdcM8a64Z411wzxrrhnjXXDPGuuGeNdSvjVCQ7MfDPGuuG
+eNdcM8a64Z411wzxrrhnjXXDPGuuGeNdcM8a64Z411wzxrrhnjXXDPGuuGeNdY3Y1QmcsnDPGuuG
+eNdcM8a64Z411wzxrrhnjXXDPGuuGeNdcM8a64Z411wzxrrhnjXXDPGui3EDHRtFcStm3Zjn/Pk7
+6/RT+Xd3Mf8ANu9OXsD3sQvjndO/g+Jnrp/Pk76/RT+Xd3Mf82705ewPexC+Od07+D4meunV/dtW
+JnCJ/EzgxqVJGP46vUokY9Z5Q7J3JzWDqwGTmo7v9cnfX6Kfy6zIBNZmHqOF7SUq/wDA3kRgALUe
+nbTJIrIU0icb3mN2TP7LmP8Am1PsgErDKnVsL2h2Kv8AAzNmIDaY5klmkxuPJAY4+bgSUWg5Wzl7
+A0xn5KpljqKl7QY2f8DuQ2KP0YTKzQZO/TEL45r/AK/6Rgfkpe59L93bYsiBS1m4v/gbSqgEXqP5
+GZpDSUd/B8TPXTqYlDcFCup2wskXSU8XTsgnuGRIAECBn2S1MTrG7NHGQMyBCtpksfhYQEHsU36y
+exRFekdKDtwyK2BnfZd7+LRcPRQmG7dzZd2VJ10t0m2KLxV9z9cnfX6Kfy6XRi6Y5BlAQzQe9CYi
+1RDO0dCTXI8lxRAscPL5KLteh2EvC0W9JFK4zcI86Y0/lEt/lMZfm+Y/5tWQzKsI5AkaOR+ERxcH
+tMXTw3izZK84MMJgBBO6pE1RDGjEx2yhhg5Sd3gXpBv/AOoVf7bmRBFt228kJy9gaPgzYe5OPIU0
+Q2ZxyNNMPTBEoM1HZBC0CRw+Ns2P7rGUQLAuxsQAK4lcwupRGS+4SaPR6R5C9MQvjlMUbNkjzwkC
+20VkqKXVjhRjjKEkSaNICgiOneI8iCkhbLDgPvI7Zt7td+yiy8cbp+gm8/aGlHfwfEz106y/GDrK
+jU4DpMsCmXHba3AZZjuSyGgfIidnK+tx4IXMmN4bMzErC2IlH2zZDZSN30MYq7Qa1QzJY8yEcGsL
+tFzlDBySo7Vq3YtUcRsvIH4GjZaOPfXJ31+in8uNICXG5+xRG87ybI87jUrTsbK2DjO5xGTJSdrj
+pHsD7ETSc3Jhhh0GGKjccLiG1G8NmUdXJJjgxPNI3j4wB9Mx/wA2qTILuyiVI4bInR2ybkqO7IYB
+i7KGB5RFb2sMA8IXj6NFDZwLpgwWvCLPRkyEb+1CEJnoe7SFH1o5sg8aKx1+nL2Bojx/dCKQReKH
+NKUzyXRXKD+iRpW5Jdh0raXv6yaVwFpFcq7bLC0bGBmo1YT95uAUZJAxb0xC+Oa6a66N2OpKzEgX
+HNkJXvj1E845AXLey7sZ4PNRltJowaCkS3xTJzrtt7P+PZRdGL04E8fx1vDlNHfwfEz10/nyd9fo
+p/Lul0YG76jtZj/m3VWNjq9Rs2bbe3szl7A9dBgb0UdrEL450uW9l3YkGx5Bf7J38HxM9dP58nfX
+4BjrKNUC/WeWdfWeWdfWeWdfWeWdfWeWdfWeWdfWeWdfWeWdfWeWdfWeWdfWeWdfWeWdfWeWdZIg
++QjSE/WeWdfWeWdfWeWdfWeWdfWeWdfWeWdfWeWdfWeWdfWeWdfWeWdfWeWdfWeWdfWeWdfWeWdS
+mEZBope+s8s6+s8s6+s8s6+s8s6+s8s6+s8s6+s8s6+s8s6+s8s6+s8s6+s8s6+s8s6+s8s6+s8s
+6x1B8g3Vl+s8s6+s8s6+s8s6+s8s6+s8s6+s8s6+s8s6+s8s6+s8s6+s8s6+s8s6+s8s6+s8s6Ko
+4ynsC+JOm/THP+fJ31+in8u7uY/5t3py9ge9iF8c7p38HxM9dP58nfX6Kfy7u5j/AJt3py9ge9iF
+8c7p38HxM9dOqpUmRWEL6yulyieZI3DH+kMxxw4mfZUKE6SzYv2VVl0Ix9j3bd23ftrJ31+in8u7
+uY/5t3py9ge9iF8c7p38HxM9dOpCiYnFlDxRsjxnk05fx9XOv3UPBpeZnLwdOd6T0E8yVI0qxqaj
+NicdSBPNb+faxpMO4uFxg8mM5FnySi0JgR3fsgUDD0mOLAExYoS/GlMMRShccck1xOG1k76/RT+X
+HI0zForB83KPqMiyGEGIEJ5ASiUeyfOZCkj4Sk9cUvJvKLaHuYZK6MnfehJblYUkIxWKW0Rj1tcS
+4bzD267IyqblwrG8vNk32dHlhmJE+SOQS+hYJFbp2Kk8sixHcJWP751ctBIsYjcfozay14aoHcih
+Unks43A7Bj+6GC9jnL2Bp+fxqIcjxyZEzo+RtLyGSnFDMqNxP44yBLF9u6UtjeK3cgN6RIhXJHNF
+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
+48eSahsu93MjGsZ3JbGzvrGGktEQC4jHiQTk8lU+KKTjjQ8d163hy6bj2HSszxHM5rd5GCqlRGJc
+C2KM1FktPhNdZRWXuwbdB0CLgSuCYeSurOblgst5blNvNyK7jRT7ZiM/OIRbjNuKic0YZbaaU9us
+QkX/ANRXO7ammP19pDqJDsSbFcJl9pwUTYgMFQhVPhRdY9kUvvo7xWpdvWQ7B9tq8JGxclMA6Qjy
+bVeKKWybrr22d5H27+a17bO8j7d/Na9tneR9u/mte2zvI+3fzWvbZ3kfbv5rXts7yPt381r22d5H
+27+a17bO8j7d/Na9tneR9u/mte2zvI+3fzWvbZ3kfbv5rXts7yPt381r22d5H27+a1V39J3xZ/Ll
+Tr2tp3W5l24TaMT3VAyFGxBeSInV6dvva6O+zvJ+3fzWvbZ3kfbv5rXts7yPt381r22d5H27+a17
+bO8j7d/Na9tneR9u/mte2zvI+3fzWvbZ3kfbv5rXts7yPt381r22d5H27+a17bO8j7d/Na9tneR9
+u/mte2zvI+3fzWvbZ3kfbv5rXddhEDviz9+tzmXZxrN9+7cV9kIEYHwVlRERRSUti5CXRr22d5H2
+7+a17bO8j7d/Na9tneR9u/mte2zvI+3fzWvbZ3kfbv5rXts7yPt381r22d5H27+a17bO8j7d/Na9
+tneR9u/mte2zvI+3fzWvbZ3kfbv5rXts7yPt381r22d5H27+a17bO8n7d/Nayufc98WfxHaDKLTH
+oow7twRONXk2jZnzE+uXNeW2w/e17bO8j7d/Na9tneR9u/mte2zvI+3fzWvbZ3kfbv5rXts7yPt3
+81r22d5H27+a17bO8j7d/Na9tneR9u/mte2zvI+3fzWvbZ3kfbv5rXts7yPt381r22d5H27+a17b
+O8j7d/Nat7hjvp7xnH6+FJltA5eqoEbDROChbNou249PTrB7i8nP2VtLgEcqdMdN+Q6aPupyNxxV
+Il2RE3Vf6R3iepZP4E1hPqCq9Ca92x3/AFfQ+kF7v/Lz6yv/AEBv3fvI/wBwch/zs+7ZL6qnejOa
+7v8A1cXpDv8ASO8T1LJ/AmsJ9QVXoTXu2O/6vofSC93/AJefWV/6A37v3kf7g5D/AJ2fdsl9VTvR
+nNd3/q4vSHfuJmQX8sINNXtq9MmO78Gm0VEUi4oq7dPwaeo8MyiFcXEdlZT0KORI8LAkIKfExFdk
+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
+l1ffN50jcL/FrJ8s7tXKGyrMyOHKtK3IXJcR2JNgxQhI4w7EaeRxs22wUmzEVQ06p9Or/GO9uxgW
+37RtPxH41JFchRosSQ12StNG84644SLuaOnx63iBNtM4/DmYjkMWICR4uTWx2MSe42CcQOVEjtuN
+m7sic1bfbEy6dg0xHzG3Yu8g5OHKnxInmEfrmpC22zzcVBbReCKRkRbci6fBDap54VWU0VhGvMcs
+nW1eZZsYSlxR5tFFSacA3GXRRUXs3C26dUeY96r1LGjYmMk6Gjx45UhpywmtLHOZJelttL1GSMGm
+hDq9oRE4XR4Ml9VTvRnNd3/q4vSHf6R3iepZP4E1hPqCq9Ca8P1DlkAbKpV0H1jEbrSdq3vxLk0Y
+F0br7+pcPBaVqliTSA5LLBumBE3y4rs4Z7bci8nbx+5Y7/q+h9IL7h/JcpxlmyvJKgTsxx6SBKTT
+YtCqI26IiqAKD1UTTUWOPBhgBaaDpXiAJxFN16ehE9y/l59ZX/oDf3A5aOLMpkgSvPxse3lK4knt
+e35J+W2259bjtx/u+595H+4OQ/52fuJGTZBi7M69kuds9NN+UJq4ooCkiA8KDuKIi8UTSCniToT3
+HJfVU70ZzXd/6uL0h3+kd4nqWT+BNYu1TYLikinCogDXvv2jwOuRhjNo0Zii7ISjspJ8OvZ/iH2s
+/wDLr2f4h9rP/Lr2f4h9rP8Ay69n+Ifaz/y69n+Ifaz/AMuvZ/iH2s/8uvZ/iH2s/wDLr2f4h9rP
+/Lr2f4h9rP8Ay69n+Ifaz/y69n+Ifaz/AMuvZ/iH2s/8uvZ/iH2s/wDLqmazvEMcrKkcjqHIr9fY
+uvulOF5ewbISXZAIugy95Nez/EPtZ/5dez/EPtZ/5dez/EPtZ/5dez/EPtZ/5dez/EPtZ/5dez/E
+PtZ/5dez/EPtZ/5dez/EPtZ/5dez/EPtZ/5dez/EPtZ/5dez/EPtZ/5dez/EPtZ/5dez/EPtZ/5d
+ez/EPtZ/5ddzkjIsQxyJk0abbli8ONYOuRpTpRAR8ZBqu4IIbKG3lFr2f4h9rP8Ay69n+Ifaz/y6
+9n+Ifaz/AMuvZ/iH2s/8uvZ/iH2s/wDLr2f4h9rP/Lr2f4h9rP8Ay69n+Ifaz/y69n+Ifaz/AMuv
+Z/iH2s/8uvZ/iH2s/wDLr2f4h9rP/Lr2f4h9rP8Ay69n+Ifaz/y6zUMHxDHLKK5mFy7anPsHWSas
+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
+dCfB/wDRj//Z
+
+------=_NextPart_000_0000_01CD4739.CBDA1EF0
+Content-Type: text/css;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Content-Location: http://www.peter-cockerell.net/aalp/html/aalp.css
+
+UNKNOWN {
+	FONT-FAMILY: "Century Schoolbook"; FONT-SIZE: 10pt
+}
+P.Heading-1 {
+	FONT-FAMILY: sans-serif; FONT-SIZE: 18pt; FONT-WEIGHT: bold
+}
+P.Heading-2 {
+	FONT-FAMILY: sans-serif; FONT-SIZE: 14pt; FONT-WEIGHT: bold
+}
+P.Heading-3 {
+	FONT-FAMILY: sans-serif; FONT-SIZE: 12pt; FONT-WEIGHT: bold
+}
+P.Heading-4 {
+	FONT-STYLE: italic; FONT-SIZE: 12pt
+}
+P.Main-Paragraph {
+=09
+}
+P.Paragraph-no-space {
+	MARGIN: 0in 0in 0pt
+}
+.Program {
+	FONT-FAMILY: monospace; WHITE-SPACE: pre; FONT-SIZE: 10pt; FONT-WEIGHT: =
+bold
+}
+.Program-light {
+	FONT-FAMILY: monospace; WHITE-SPACE: pre; FONT-SIZE: 10pt
+}
+SPAN.Bold {
+	FONT-WEIGHT: bold
+}
+SPAN.computer {
+	FONT-FAMILY: monospace; FONT-SIZE: 10pt; FONT-WEIGHT: bold
+}
+SPAN.H {
+	FONT-SIZE: 75%; VERTICAL-ALIGN: super
+}
+SPAN.Italic {
+	FONT-STYLE: italic
+}
+TD.is-grid-bit {
+	FONT-FAMILY: sans-serif; FONT-SIZE: 8pt; FONT-WEIGHT: bold
+}
+TD.is-grid-label {
+	FONT-FAMILY: sans-serif; FONT-SIZE: 10pt; FONT-WEIGHT: bold
+}
+
+------=_NextPart_000_0000_01CD4739.CBDA1EF0
+Content-Type: application/octet-stream
+Content-Transfer-Encoding: quoted-printable
+Content-Location: http://www.peter-cockerell.net/aalp/html/aalp.js
+
+/**=0A=
+ * This function generates the HTML for a register-type table.=0A=
+ * The argument is an array of arrays.=0A=
+ * Each element of the outer array has three elements:=0A=
+ *  The HI bit number for the field=0A=
+ *  The LO bit number for the field=0A=
+ *  The label for the field=0A=
+ * The register is drawn using cell border styles, and doesn't=0A=
+ * work with NS 4.x or earlier.=0A=
+ */=0A=
+function regTable(fields) {=0A=
+	document.writeln('<table border=3D0 cellspacing=3D0 cellpadding=3D2>');=0A=
+	document.write('<tr>');=0A=
+	var i;=0A=
+	for (i=3D0; i < fields.length; i++) {=0A=
+		var f, hi, lo, label;=0A=
+		f =3D fields[i];=0A=
+		hi =3D f[0];=0A=
+		lo =3D f[1];=0A=
+		label =3D f[2];=0A=
+		if (hi =3D=3D lo) {=0A=
+			document.write('<td class=3D"is-grid-bit" =
+align=3D"center">'+lo+'</td>');=0A=
+		} else {=0A=
+			document.write('<td class=3D"is-grid-bit">'+hi+'</td><td =
+class=3D"is-grid-bit" align=3D"right">'+lo+'</td>');=0A=
+		}=0A=
+	}=0A=
+	document.writeln('</tr>');=0A=
+	document.write('<tr>');=0A=
+	var i;=0A=
+	for (i=3D0; i < fields.length; i++) {=0A=
+		var f, hi, lo, label;=0A=
+		f =3D fields[i];=0A=
+		hi =3D f[0];=0A=
+		lo =3D f[1];=0A=
+		label =3D f[2];=0A=
+		document.write('<td class=3D"is-grid-label" align=3D"center" =
+width=3D"' + (hi-lo+1)*18 + '"');=0A=
+		if (hi !=3D lo) {=0A=
+			document.write(' colspan=3D"2"');=0A=
+		}=0A=
+		var style;=0A=
+		if (i =3D=3D 0) {=0A=
+			style =3D "border-style: solid;";=0A=
+		} else {=0A=
+			style =3D "border-style: solid solid solid none;";=0A=
+		}=0A=
+		document.write('style=3D"border-color: black; border-width: 1px; ' + =
+style + '">'+label+'</td>');=0A=
+	}=0A=
+	document.writeln('</tr>');=0A=
+	document.writeln('</table>');=0A=
+}=0A=
+
+------=_NextPart_000_0000_01CD4739.CBDA1EF0--

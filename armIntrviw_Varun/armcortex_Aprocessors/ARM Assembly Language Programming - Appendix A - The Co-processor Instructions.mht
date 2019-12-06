@@ -1,0 +1,757 @@
+From: "Saved by Windows Internet Explorer 8"
+Subject: ARM Assembly Language Programming - Appendix A - The Co-processor Instructions
+Date: Sun, 10 Jun 2012 18:58:28 +0530
+MIME-Version: 1.0
+Content-Type: multipart/related;
+	type="text/html";
+	boundary="----=_NextPart_000_0000_01CD473B.05AC8F90"
+X-MimeOLE: Produced By Microsoft MimeOLE V6.1.7600.16807
+
+This is a multi-part message in MIME format.
+
+------=_NextPart_000_0000_01CD473B.05AC8F90
+Content-Type: text/html;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Content-Location: http://www.peter-cockerell.net/aalp/html/app-a.html
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD><TITLE>ARM Assembly Language Programming - Appendix A - The =
+Co-processor Instructions</TITLE>
+<META content=3Dtext/html;charset=3Diso-8859-1 =
+http-equiv=3Dcontent-type><LINK=20
+rel=3Dstylesheet type=3Dtext/css=20
+href=3D"http://www.peter-cockerell.net/aalp/html/aalp.css">
+<META name=3DGENERATOR content=3D"MSHTML 8.00.7600.16891"></HEAD>
+<BODY>
+<P class=3DHeading-1>Appendix A</P>
+<P class=3DHeading-1>The Co-processor Instructions</P>
+<P class=3DMain-Paragraph>In Chapter Seven, we talked about the =
+undefined=20
+instruction trap. This occurs when the ARM tries to execute an =
+instruction which=20
+does not have a valid interpretation. There are over four billion =
+possible=20
+combinations of the 32 bits which form an instruction code, so it is not =
+really=20
+surprising that some of these are not defined to do anything =
+meaningful.</P>
+<P class=3DMain-Paragraph>There are two types of undefined instruction. =
+The first=20
+set are totally illegal, and cause the undefined instruction vector to =
+be called=20
+whenever they are encountered. The second set are only classed as =
+illegal if=20
+there is no co-processor in the system which can execute them. =
+Unsurprisingly,=20
+these are called the co-processor instructions. Note that the ARM itself =
+treats=20
+all undefined instructions as possible co-processor ones. The only thing =
+which=20
+distinguishes the first class from the second is that no co-processor =
+will ever=20
+indicate that it can execute the first type.</P>
+<P class=3DMain-Paragraph>Note also that if an instruction is not =
+executed because=20
+its condition codes cause it to be ignored by the ARM, it will never be=20
+'offered' to a co-processor, or trapped as an undefined instruction. =
+This means=20
+that if an instruction is a 'no-operation' due to its condition code =
+being=20
+'never', the rest of instruction can be anything - it will never cause a =
+trap to=20
+occur.</P>
+<P class=3DHeading-2>A.1 ARM/co-processor handshaking</P>
+<P class=3DMain-Paragraph>An ARM co-processor is an external chip (or =
+chips),=20
+connected to the ARM data and control buses. When the ARM fails to =
+recognise an=20
+instruction, it initiates a co-processor handshake sequence, using three =
+special=20
+signals which connect the two chips together. The three signals are:</P>
+<P class=3DHeading-3>CPI Co-processor instruction.</P>
+<P class=3DMain-Paragraph>The ARM asserts this when it encounters any =
+undefined=20
+instruction. All co-processors in the system monitor it, ready to leap =
+into=20
+action when they see it become active.</P>
+<P class=3DHeading-3>CPA Co-processor absent.</P>
+<P class=3DMain-Paragraph>When a co-processor sees that an undefined =
+instruction=20
+has been fetched (by reading the CPI signal), it uses CPA to tell the =
+ARM if it=20
+can execute it. There are two parts to the instruction which determine =
+whether=20
+it is 'co-processable'. The first is a single bit which indicates =
+whether a=20
+particular undefined instruction is a proper co-processor one (the bit =
+is set)=20
+or an undefined one (the bit is clear).</P>
+<P class=3DMain-Paragraph>The second part is the co-processor id. This =
+is a=20
+four-bit field which determines which of 16 possible co-processors the=20
+instruction is aimed at. If this field matches the co-processor's id, =
+<SPAN=20
+class=3DItalic>and</SPAN> the instruction is a true co-processor one, =
+the=20
+co-processor lets the ARM know by setting the CPA signal low. If none of =
+the=20
+co-processors recognises the id, or there aren't any, the CPA line will =
+remain=20
+in its normal high state, and the ARM will initiate an undefined =
+instruction=20
+trap.</P>
+<P class=3DHeading-3>CPB Co-processor busy</P>
+<P class=3DMain-Paragraph>Once a co-processor claims an instruction, the =
+ARM must=20
+wait for it to become available to actually execute it. This is =
+necessary=20
+because the co-processor might still be in the middle of executing a =
+previous=20
+undefined instruction. The ARM waits for the co-processor to become =
+ready by=20
+monitoring CPB. This is high while the co-processor is tied up =
+performing some=20
+internal operation, and is taken low when it is ready to accept the new=20
+instruction.</P>
+<P class=3DMain-Paragraph>Note that while the ARM is waiting for CPB to =
+go low,=20
+the program which executed the co-processor instruction is effectively =
+halted.=20
+However, interrupts are still enabled, so these may be serviced as =
+usual. When=20
+the interrupt routine returns to the co-processor instruction, it is =
+effectively=20
+re-executed from the beginning, with the handshake starting again from =
+the ARM=20
+asserting CPI. Note also that in a multi-tasking system, where several =
+programs=20
+share the processor in turn, switching between tasks is performed under=20
+interrupts, so only the program which executed the co-processor =
+instruction will=20
+be held up by the ARM waiting for the co-processor to become =
+available.</P>
+<P class=3DMain-Paragraph>Once the ARM gets the co-processor's undivided =
+
+attention, they can execute the instruction between them. There are =
+three=20
+classes of instruction, and what happens once the co-processor is ready =
+depends=20
+on which class the instruction belongs to. Simplest are the internal=20
+co-processor operations. These require no further intervention from the =
+ARM,=20
+which continues executing the next instruction, while the co-processor =
+performs=20
+the required operation.</P>
+<P class=3DMain-Paragraph>The second class is ARM to (or from) =
+co-processor data=20
+transfer. This is where data is transferred between ARM registers and =
+those on=20
+the co-processor. Thirdly, co-processor to (or from) memory operations =
+may be=20
+executed. In these, the ARM provides the addresses, but data is =
+transferred into=20
+or out of the co-processor. In the sections below, each class of =
+co-processor=20
+instruction is described in detail.</P>
+<P class=3DMain-Paragraph>Like the ARM, a co-processor can restrict =
+instruction=20
+execution to supervisor mode only. It does this by monitoring the state =
+of the=20
+SPVMD signal, described in Chapter Seven. If a privileged instruction is =
+
+attempted from user mode, the co-processor could signal this using the =
+ABORT=20
+line, just as the MEMC does. The abort handler code would have to be =
+able to=20
+determine that it was a co-processor rather than the MEMC which created =
+the=20
+abort, so that it could deal with it appropriately. However, there is no =
+way in=20
+which an aborted co-processor instruction could be re-started, because =
+the ARM=20
+cannot tell where the instruction originally came from.</P>
+<P class=3DHeading-2>A.2 Types of co-processor</P>
+<P class=3DMain-Paragraph>Currently, only one co-processor's instruction =
+set has=20
+been fully defined. This is the floating point unit (FPU). As the chips =
+have not=20
+been made yet, even these instructions are treated as undefined ones. =
+However,=20
+Acorn has written a program, the floating point emulator package, which=20
+intercepts the undefined instruction trap and emulates in software the =
+floating=20
+point instruction set. The only difference between a system which has an =
+FPU=20
+fitted and one which uses the emulator is the speed in which they =
+execute the=20
+instructions (the emulator is anything between 10 and 100 times slower,=20
+depending on the operation).</P>
+<P class=3DMain-Paragraph>Because of the way in which the co-processor =
+protocol=20
+works, it is possible to design chips which recognise successively more =
+of the=20
+instruction set. Thus a first generation FPU might just execute the four =
+simple=20
+arithmetic operations in hardware, leaving the emulator to do the =
+difficult=20
+stuff (possible using the FPU instructions to do it). A final version =
+could=20
+implement the whole of the instruction set, leaving the emulator with =
+nothing to=20
+do.</P>
+<P class=3DMain-Paragraph>The FPU instruction set is described in =
+Appendix B.</P>
+<P class=3DMain-Paragraph>Further co-processors might concentrate on =
+other aspects=20
+of a system. For example, a graphics co-processor might execute =
+line-drawing and=20
+shape filling instructions, performing the required calculations and =
+data=20
+transfers without placing any burden on the ARM. Such a chip would =
+probably have=20
+its own screen memory so that it would not have to compete with the ARM =
+for=20
+access to RAM.</P>
+<P class=3DHeading-2>A.3 Co-processor data instructions</P>
+<P class=3DMain-Paragraph>This class of instruction requires no further =
+action=20
+from the ARM once it has ascertained that there is a co-processor =
+capable of=20
+dealing with it. However, as mentioned above, the ARM may still have to =
+wait for=20
+the co-processor to become available before it can carry on with the =
+next=20
+instruction.</P>
+<P class=3DMain-Paragraph>Because there is no further communication =
+between the=20
+ARM and the co-processor, the latter could incorporate an internal =
+buffer where=20
+it stores the instructions for later execution. As long as there is room =
+in the=20
+buffer (commonly called a FIFO for 'first-in, first-out queue'), the=20
+co-processor can accept an instruction immediately. Thus while the ARM =
+is=20
+fetching and executing (defined) instructions from memory, the =
+co-processor=20
+could meanwhile be executing its internal operations in parallel. This =
+is=20
+similar to the well known Acorn Second Processor concept, where an I/O =
+processor=20
+accepts commands from a FIFO while the language processor works =
+independently on=20
+some other task.</P>
+<P class=3DMain-Paragraph>In practice the amount of parallel processing =
+which can=20
+be achieved is limited by the fact that eventually the ARM will want a =
+result=20
+from the co-processor; so it will hang around waiting for the queue of=20
+instructions to be executed before it can ask for the required values. =
+In=20
+situations where results are not required, e.g. a graphics co-processor =
+which=20
+just takes commands and executes them without passing information back, =
+the=20
+benefits can be great.</P>
+<P class=3DMain-Paragraph>The general mnemonic for this type of =
+instruction is=20
+<SPAN class=3Dcomputer>CDP</SPAN>, for co-processor data processing. =
+There are=20
+five operands which define which co-processor is required, which =
+operation is=20
+required, which are the source and destination registers, and one for =
+'optional=20
+extra' information. Of course, the condition code mnemonic may also be=20
+present.</P>
+<P class=3DMain-Paragraph>Here is the general form of a <SPAN=20
+class=3Dcomputer>CDP</SPAN> instruction:</P>
+<P class=3DProgram>CDP{cond}=20
+&lt;cp#&gt;,&lt;op&gt;,&lt;dest&gt;,&lt;lhs&gt;,&lt;rhs&gt;,{info}</P>
+<P class=3DMain-Paragraph>where</P>
+<UL>
+  <LI class=3DMain-Paragraph><SPAN class=3Dcomputer>{cond}</SPAN> is the =
+optional=20
+  condition code=20
+  <LI class=3DMain-Paragraph><SPAN class=3Dcomputer>&lt;cp#&gt;</SPAN> =
+is the=20
+  co-processor number (0-15)=20
+  <LI class=3DMain-Paragraph><SPAN class=3Dcomputer>&lt;op&gt;</SPAN> is =
+the desired=20
+  operation code (0-15)=20
+  <LI class=3DMain-Paragraph><SPAN class=3Dcomputer>&lt;dest&gt;</SPAN> =
+is the=20
+  co-processor destination register (0-15)=20
+  <LI class=3DMain-Paragraph><SPAN class=3Dcomputer>&lt;lhs&gt; =
+</SPAN>and=20
+  <LI class=3DMain-Paragraph><SPAN class=3Dcomputer>&lt;rhs&gt;</SPAN> =
+are the=20
+  co-processor source registers (0-15)=20
+  <LI class=3DMain-Paragraph><SPAN class=3Dcomputer>{info}</SPAN> is the =
+optional=20
+  additional information field (0-7) </LI></UL>
+<P class=3DMain-Paragraph>The last five are all stored as four-bit (or =
+three-bit=20
+in the case of <SPAN class=3Dcomputer>info</SPAN>) fields in the =
+instruction code.=20
+Note that except for the co-processor number field, which must be in a =
+fixed=20
+place in the instruction for the system to work, none of the items has =
+to be=20
+interpreted as above. A co-processor can place whatever meaning on the =
+remaining=20
+19 bits that it wants, but this standard defined by Acorn should at =
+least be=20
+used as a starting point.</P>
+<P class=3DMain-Paragraph>A particular type of co-processor would have =
+its=20
+co-processor field value fixed, and the operation code could be given a =
+more=20
+meaningful name. For example, the FPU has a <SPAN=20
+class=3Dcomputer>&lt;cp#&gt;</SPAN> of 1 and uses the <SPAN=20
+class=3Dcomputer>&lt;op&gt;</SPAN> field to describe one of sixteen =
+possible=20
+instructions.</P>
+<P class=3DMain-Paragraph>There are only eight registers in the FPU, so =
+the top=20
+bit of the <SPAN class=3Dcomputer>&lt;dest&gt;</SPAN>, <SPAN=20
+class=3Dcomputer>&lt;lhs&gt;</SPAN> and <SPAN =
+class=3Dcomputer>&lt;rhs&gt;</SPAN>=20
+fields can be used for other purposes. For example, the top bit of the =
+<SPAN=20
+class=3Dcomputer>&lt;dest&gt;</SPAN> field is used to indicate which =
+class of=20
+operation is required (dyadic, operating on two values, or monadic, =
+operating on=20
+one).</P>
+<P class=3DMain-Paragraph>So, although the FPU conforms to the spirit of =
+the=20
+standard, it uses the fields to maximise the use of the bits available =
+in the=20
+instruction. A typical FPU instruction is:</P>
+<P class=3DProgram>ADF {cond}&lt;P&gt;{R} =
+&lt;dest&gt;,&lt;lhs&gt;,&lt;rhs&gt;</P>
+<P class=3DMain-Paragraph>where</P>
+<UL>
+  <LI class=3DMain-Paragraph><SPAN class=3Dcomputer>&lt;P&gt;</SPAN> is =
+the=20
+  precision of the operation=20
+  <LI class=3DMain-Paragraph><SPAN class=3Dcomputer>{R}</SPAN> is the =
+optional=20
+  rounding mode and the other fields are as above. </LI></UL>
+<P class=3DMain-Paragraph>The <SPAN class=3Dcomputer>&lt;P&gt;</SPAN> =
+and <SPAN=20
+class=3Dcomputer>{R}</SPAN> fields are encoded into the 'optional extra' =
+
+information field and the top bit of the <SPAN =
+class=3Dcomputer>&lt;lhs&gt;</SPAN>=20
+field. For more details about the FPU instruction set, see Appendix =
+B.</P>
+<P class=3DMain-Paragraph>As another example, a graphics co-processor =
+might use a=20
+<SPAN class=3Dcomputer>CDP</SPAN> instruction to set its colour palette =
+entries.=20
+For example,</P>
+<P class=3DProgram>CDP=20
+2,&lt;palette&gt;,&lt;entry&gt;,&lt;value&gt;,&lt;component&gt;</P>
+<P class=3DMain-Paragraph>where</P>
+<UL>
+  <LI class=3DMain-Paragraph><SPAN class=3Dcomputer>2</SPAN> is the =
+co-processor=20
+  number=20
+  <LI class=3DMain-Paragraph><SPAN =
+class=3Dcomputer>&lt;palette&gt;</SPAN> is the=20
+  op-code for setting the palette=20
+  <LI class=3DMain-Paragraph><SPAN class=3Dcomputer>&lt;entry&gt;</SPAN> =
+is the=20
+  logical colour number (0-15) (the <SPAN =
+class=3Dcomputer>&lt;dest&gt;</SPAN>=20
+  field)=20
+  <LI class=3DMain-Paragraph><SPAN =
+class=3Dcomputer>&lt;component&gt;</SPAN> is the=20
+  red, green or blue component (0-2) (the <SPAN =
+class=3Dcomputer>info</SPAN>=20
+  field)=20
+  <LI class=3DMain-Paragraph><SPAN class=3Dcomputer>&lt;value&gt;</SPAN> =
+is the=20
+  intensity for that component (0-65535) (the <SPAN=20
+  class=3Dcomputer>&lt;lhs&gt;</SPAN> and=20
+  <LI class=3DMain-Paragraph><SPAN class=3Dcomputer>&lt;rhs&gt;</SPAN>) =
+field.=20
+</LI></UL>
+<P class=3DMain-Paragraph>As long as the desired operation can be =
+expressed in the=20
+number of bits available, any operation which requires no further =
+communication=20
+between the ARM and co-processor can use a <SPAN =
+class=3Dcomputer>CDP</SPAN>-type=20
+instruction.</P>
+<P class=3DHeading-2>A.4 Co-processor register transfer operations</P>
+<P class=3DMain-Paragraph>This class of co-processor instruction is used =
+to=20
+transfer a single 32-bit value from the ARM to the co-processor, or from =
+the=20
+co-processor to the ARM. The standard mnemonics are <SPAN=20
+class=3Dcomputer>MRC</SPAN> for Move from ARM to Co-processor, and <SPAN =
+
+class=3Dcomputer>MCR</SPAN> for Move from Co-processor to ARM. The =
+general forms=20
+are:</P>
+<P class=3DProgram>MRC{cond} &lt;cp#&gt;,&lt;op&gt;,&lt;ARM=20
+srce&gt;,&lt;lhs&gt;,&lt;rhs&gt;,{info}<BR>MCR{cond}=20
+&lt;cp#&gt;,&lt;op&gt;,&lt;ARM =
+dest&gt;,&lt;lhs&gt;,&lt;rhs&gt;,{info}</P>
+<P class=3DMain-Paragraph>where</P>
+<UL>
+  <LI class=3DMain-Paragraph><SPAN class=3Dcomputer>&lt;cp#&gt;</SPAN> =
+is the=20
+  co-processor number (0-15)=20
+  <LI class=3DMain-Paragraph><SPAN class=3Dcomputer>&lt;op&gt;</SPAN> is =
+the=20
+  operation code required (0-7)=20
+  <LI class=3DMain-Paragraph><SPAN class=3Dcomputer>&lt;ARM =
+srce&gt;</SPAN>/<SPAN=20
+  class=3Dcomputer>&lt;ARM dest&gt;</SPAN> is the ARM source/destination =
+register=20
+  (0-15)=20
+  <LI class=3DMain-Paragraph><SPAN class=3Dcomputer>&lt;lhs&gt;</SPAN> =
+and <SPAN=20
+  class=3Dcomputer>&lt;rhs&gt;</SPAN> are co-processor register numbers =
+(0-15)=20
+  <LI class=3DMain-Paragraph><SPAN class=3Dcomputer>{info}</SPAN> is =
+optional extra=20
+  information (0-7) </LI></UL>
+<P class=3DMain-Paragraph>Notice that the number of possible opcodes has =
+been=20
+halved compared to <SPAN class=3Dcomputer>CDP</SPAN>, as there are now =
+two=20
+directions between which to share the sixteen possible codes.</P>
+<P class=3DMain-Paragraph>The <SPAN class=3Dcomputer>MCR</SPAN> =
+instruction does not=20
+necessarily have to be a simple transfer from a co-processor register to =
+an ARM=20
+one. A complex internal operation could be performed on <SPAN=20
+class=3Dcomputer>&lt;lhs&gt;</SPAN> and <SPAN =
+class=3Dcomputer>&lt;rhs&gt;</SPAN>=20
+before the transfer takes place. The co-processor only signals its =
+readiness to=20
+the ARM when it has performed all the necessary internal work and is =
+prepared to=20
+transfer the result to the ARM.</P>
+<P class=3DMain-Paragraph>Again, the exact interpretation of the fields =
+depends on=20
+the type of co-processor. An example of an FPU <SPAN =
+class=3Dcomputer>MRC</SPAN>=20
+operation is the 'float' instruction, to convert a 32-bit two's =
+complement=20
+integer (in an ARM register) to a floating point number of some =
+specified=20
+precision and rounding type (in an FPU register):</P>
+<P class=3DProgram>FLT{cond}&lt;P&gt;{R} &lt;ARM =
+srce&gt;,&lt;lhs&gt;</P>
+<P class=3DMain-Paragraph>Similarly, an FPU <SPAN =
+class=3Dcomputer>MCR</SPAN>=20
+instruction is the 'fix' operation, which converts a floating point =
+number (in=20
+the FPU) to an integer (in the ARM):</P>
+<P class=3DProgram>FIX{cond}&lt;P&gt;{R} &lt;ARM =
+dest&gt;,&lt;rhs&gt;</P>
+<P class=3DMain-Paragraph>Notice that a different field is used in each =
+case to=20
+specify the required FPU register. This does not concern the programmer, =
+since=20
+only a register number (or name) is specified. It is up to the assembler =
+to=20
+generate the appropriate binary op-code.</P>
+<P class=3DMain-Paragraph>A graphics co-processor might use this =
+instruction to=20
+read or write the current pixel location. If expressed as two sixteen =
+bit=20
+co-ordinates, this could be encoded into a single 32-bit register. The=20
+operations might be:</P>
+<P class=3DProgram>MCR 2,&lt;cursor&gt;,&lt;ARM dest&gt;<BR>MRC=20
+2,&lt;cursor&gt;,&lt;ARM srce&gt;</P>
+<P class=3DMain-Paragraph>In this case, only the opcode is set to <SPAN=20
+class=3Dcomputer>&lt;cursor&gt;</SPAN> to indicate a cursor operation. =
+The <SPAN=20
+class=3Dcomputer>&lt;lhs&gt;</SPAN>, <SPAN =
+class=3Dcomputer>&lt;rhs&gt;</SPAN> and=20
+<SPAN class=3Dcomputer>{info}</SPAN> fields are not used.</P>
+<P class=3DHeading-3>Using R15 in MCR/MRC instructions</P>
+<P class=3DMain-Paragraph>When R15 in the ARM is specified as the <SPAN=20
+class=3Dcomputer>&lt;ARM dest&gt;</SPAN> register, only four bits are =
+ever=20
+affected: the N, Z, V and C flags. The PC part of R15 and the mode and =
+interrupt=20
+bits are never changed, even in supervisor mode. This makes the <SPAN=20
+class=3Dcomputer>MCR</SPAN> instruction useful for transferring data =
+from the=20
+co-processor directly into the ARM result flags. The FPU's compare =
+instructions=20
+use this facility.</P>
+<P class=3DMain-Paragraph>If R15 is given as the <SPAN=20
+class=3Dcomputer>&lt;srce&gt;</SPAN> register, all 32-bits are =
+transferred to the=20
+co-processor. It is not envisaged that many co-processors will have a =
+use for=20
+the ARM's PC/status register, but the ability to access it is there if=20
+required.</P>
+<P class=3DHeading-2>A.5 Co-processor data transfer operations</P>
+<P class=3DMain-Paragraph>This group of instructions provides a similar =
+function=20
+to the <SPAN class=3Dcomputer>LDR</SPAN>/<SPAN =
+class=3Dcomputer>STR</SPAN>=20
+instructions, but transfers data between a co-processor and memory =
+instead of=20
+between the ARM and memory. The address of the word(s) to be transferred =
+is=20
+expressed in a similar way to <SPAN class=3Dcomputer>LDR</SPAN>/<SPAN=20
+class=3Dcomputer>STR</SPAN>, that is to say you can use pre-indexed and=20
+post-indexed addressing, using any of the ARM registers as a base. =
+However, only=20
+immediate offsets are allowed, in the range -255 to +255 words (-1020 to =
++1020=20
+bytes).</P>
+<P class=3DMain-Paragraph>Like <SPAN class=3Dcomputer>LDR</SPAN>/<SPAN=20
+class=3Dcomputer>STR</SPAN>, write-back to the base register may be =
+performed=20
+optionally after a pre-indexed instruction and is always performed after =
+a=20
+post-indexed instruction.</P>
+<P class=3DMain-Paragraph>The mnemonics are <SPAN =
+class=3Dcomputer>LDC</SPAN> to=20
+load data into a co-processor, and <SPAN class=3Dcomputer>STC</SPAN> to =
+store=20
+data. The full syntax is:</P>
+<P class=3DProgram>LDC{cond}{L}=20
+&lt;cp#&gt;,&lt;dest&gt;,&lt;address&gt;<BR>STC{cond}{L}=20
+&lt;cp#&gt;,&lt;srce&gt;,&lt;address&gt;</P>
+<P class=3DMain-Paragraph>where</P>
+<UL>
+  <LI class=3DMain-Paragraph><SPAN class=3Dcomputer>{L}</SPAN> is an =
+optional bit=20
+  meaning 'long transfer'; see below=20
+  <LI class=3DMain-Paragraph><SPAN class=3Dcomputer>&lt;cp#&gt;</SPAN> =
+is the=20
+  co-processor number (0-15)=20
+  <LI class=3DMain-Paragraph><SPAN =
+class=3Dcomputer>&lt;srce&gt;,&lt;dest&gt;</SPAN>=20
+  is the co-processor register number (0-15)=20
+  <LI class=3DMain-Paragraph><SPAN =
+class=3Dcomputer>&lt;address&gt;</SPAN> specifies=20
+  the address at which to start transferring data </LI></UL>
+<P class=3DHeading-3>Address modes</P>
+<P class=3DMain-Paragraph>There are three forms that <SPAN=20
+class=3Dcomputer>&lt;address&gt;</SPAN> can take: a simple expression, a =
+
+pre-indexed address, and a post-indexed address.</P>
+<P class=3DMain-Paragraph>If a simple expression is given for the =
+address, the=20
+assembler will try to generate a PC-relative, pre-indexed instruction, =
+without=20
+write-back. Thus if you say:</P>
+<P class=3DProgram>LDC 1,F1,label</P>
+<P class=3DMain-Paragraph>(F1 being a co-processor register name) the =
+assembler=20
+will generate this equivalent instruction:</P>
+<P class=3DProgram>LDC 1,F1,[R15,#label-(P%+8)]</P>
+<P class=3DMain-Paragraph>assuming the label is after the instruction. =
+Note that=20
+as with <SPAN class=3Dcomputer>LDR</SPAN>/<SPAN =
+class=3Dcomputer>STR</SPAN>, the=20
+assembler takes pipe-lining into account automatically when R15 is used=20
+implicitly (as above), or explicitly (as below). Note also that the =
+maximum=20
+offset in each direction is only 1020 bytes for <SPAN=20
+class=3Dcomputer>LDC</SPAN>/<SPAN class=3Dcomputer>STC</SPAN>, instead =
+of 4095,=20
+which <SPAN class=3Dcomputer>LDR</SPAN>/<SPAN =
+class=3Dcomputer>STR</SPAN> give you.=20
+If the address that the instruction tries to access is outside the =
+available=20
+range, the assembler gives an error.</P>
+<P class=3DMain-Paragraph>The remaining forms of <SPAN=20
+class=3Dcomputer>&lt;address&gt;</SPAN> are:</P>
+<P class=3DMain-Paragraph><SPAN class=3Dcomputer>[&lt;base&gt;]</SPAN> =
+address in=20
+ARM register <SPAN class=3Dcomputer>&lt;base&gt;<BR></SPAN><SPAN=20
+class=3Dcomputer>[&lt;base&gt;,#&lt;offset&gt;]{!}</SPAN><SPAN =
+class=3Dcomputer>=20
+&lt;base&gt;+&lt;offset&gt;</SPAN>, {with write-back}<BR><SPAN=20
+class=3Dcomputer>[&lt;base&gt;],#&lt;offset&gt;</SPAN><SPAN =
+class=3Dcomputer>=20
+</SPAN><SPAN class=3Dcomputer>&lt;base&gt;</SPAN>, then add <SPAN=20
+class=3Dcomputer>&lt;offset&gt;</SPAN> to <SPAN=20
+class=3Dcomputer>&lt;base&gt;</SPAN></P>
+<P class=3DMain-Paragraph>The offsets are specified in bytes, in the =
+range -1020=20
+to +1020. However, they are scaled to words (by dividing by four) when =
+stored in=20
+the instruction, so only word-boundary offsets should be used.</P>
+<P class=3DMain-Paragraph>These instructions differ from <SPAN=20
+class=3Dcomputer>LDR</SPAN>/<SPAN class=3Dcomputer>STR</SPAN> in that =
+more than one=20
+register may be transferred. The optional <SPAN =
+class=3Dcomputer>L</SPAN> part of=20
+the syntax is designed to enable a choice between short (single word) =
+and long=20
+(multiple word) transfers to take place. It is up to the co-processor to =
+control=20
+how many words are transferred. The ARM, having calculated the start =
+address=20
+from the base register, offset, and address mode will automatically =
+increment=20
+the address after each operation.</P>
+<P class=3DHeading-3>Long transfers</P>
+<P class=3DMain-Paragraph>Remember that <SPAN =
+class=3Dcomputer>LDM</SPAN>/<SPAN=20
+class=3Dcomputer>STM</SPAN> always loads/stores registers in ascending =
+memory=20
+locations. A similar thing happens with multiple register <SPAN=20
+class=3Dcomputer>LDC</SPAN>/<SPAN class=3Dcomputer>STC</SPAN> transfers. =
+Suppose an=20
+<SPAN class=3Dcomputer>STCL</SPAN> instruction for a given co-processor =
+stores its=20
+internal registers from the one given in the instruction, up to the =
+highest one,=20
+F7. The instruction:</P>
+<P class=3DProgram>STCL 1,F0,[R1,#-32]!</P>
+<P class=3DMain-Paragraph>works as follows. The start address of the =
+transfer is=20
+calculated from the contents of R1 minus 32. This is written back into =
+R1. Then=20
+the eight data transfers take place, starting from the calculated =
+address and=20
+increasing by four bytes after each one. Similarly,</P>
+<P class=3DProgram>LDCL 1,F4,[R1],#16</P>
+<P class=3DMain-Paragraph>will load four registers, starting from the =
+address in=20
+R1 and adding four after each transfer. Finally, 16 is added to the base =
+
+register R1.</P>
+<P class=3DMain-Paragraph>The FPU uses this group of instructions to =
+load and=20
+store numbers from its floating point registers. There are four possible =
+lengths=20
+allowed (single, double, extended and packed) which take one, two, three =
+and=20
+three words of memory respectively. The <SPAN class=3Dcomputer>L</SPAN> =
+option=20
+only allows two possible lengths. However, the FPU only has eight =
+internal=20
+registers, so the top bit of the <SPAN =
+class=3Dcomputer>&lt;dest&gt;</SPAN>/<SPAN=20
+class=3Dcomputer>&lt;srce&gt;</SPAN> field is used to encode the extra =
+two length=20
+options.</P>
+<P class=3DMain-Paragraph>Apart from this minor difference, the FPU load =
+and store=20
+data instructions obey exactly the general form of the co-processor data =
+
+transfer, as Appendix B describes.</P>
+<P class=3DHeading-3>Aborts and address exceptions</P>
+<P class=3DMain-Paragraph>Since this class of instruction uses the ARM =
+address=20
+bus, instruction aborts and address exceptions can occur as for <SPAN=20
+class=3Dcomputer>LDM</SPAN>/<SPAN class=3Dcomputer>STM</SPAN> etc. In =
+the case of an=20
+exception (the start address has one or more of bits 26-31 set), exactly =
+the=20
+same action occurs as for a native ARM exception, i.e. the instruction =
+is=20
+stopped and the address exception vector called. In the case of multiple =
+word=20
+transfers, only an illegal start address will be recognised; if it =
+subsequently=20
+gets incremented to an illegal value, it will 'wrap-around' into the =
+first few=20
+words of memory.</P>
+<P class=3DMain-Paragraph>Data aborts also behave in a similar way to =
+native ARM=20
+instructions. As usual, if write-back was specified, the base register =
+will be=20
+updated, but no other changes will take place in the ARM or co-processor =
+
+registers. This enables the abort handler code to re-start the =
+instruction after=20
+undoing any indexing. Note that it is up to the co-processor to monitor =
+the=20
+ABORT signal and stop processing when it is activated.</P>
+<P class=3DHeading-2>A.6 Co-processor instruction timings</P>
+<P class=3DMain-Paragraph>In addition to the n, i and i-cycles mentioned =
+at the=20
+end of Chapter Three, co-processor instructions also use c (for =
+co-processor)=20
+cycles. These are the same period as s and i-cycles.</P>
+<P class=3DHeading-4>CDP timing</P>
+<P class=3DMain-Paragraph>1 s + B i-cycles.</P>
+<P class=3DHeading-4>MRC timing</P>
+<P class=3DMain-Paragraph>1 s + B i + 1 c-cycles.</P>
+<P class=3DHeading-4>MCR timing</P>
+<P class=3DMain-Paragraph>1 s + (B+1) i + 1 c- cycles.</P>
+<P class=3DHeading-4>LDC/STC timing</P>
+<P class=3DMain-Paragraph>(N-1) s + B i + 1 c-cycles.</P>
+<P class=3DMain-Paragraph>where:</P>
+<P class=3DMain-Paragraph><SPAN class=3Dcomputer>B</SPAN> is the number =
+of cycles=20
+the ARM spends waiting for the co-processor to become ready (which has a =
+minimum=20
+of zero).</P>
+<P class=3DMain-Paragraph><SPAN class=3Dcomputer>N</SPAN> is the number =
+of words=20
+transferred.</P>
+<P class=3DMain-Paragraph></P></BODY></HTML>
+
+------=_NextPart_000_0000_01CD473B.05AC8F90
+Content-Type: text/css;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Content-Location: http://www.peter-cockerell.net/aalp/html/aalp.css
+
+UNKNOWN {
+	FONT-FAMILY: "Century Schoolbook"; FONT-SIZE: 10pt
+}
+P.Heading-1 {
+	FONT-FAMILY: sans-serif; FONT-SIZE: 18pt; FONT-WEIGHT: bold
+}
+P.Heading-2 {
+	FONT-FAMILY: sans-serif; FONT-SIZE: 14pt; FONT-WEIGHT: bold
+}
+P.Heading-3 {
+	FONT-FAMILY: sans-serif; FONT-SIZE: 12pt; FONT-WEIGHT: bold
+}
+P.Heading-4 {
+	FONT-STYLE: italic; FONT-SIZE: 12pt
+}
+P.Main-Paragraph {
+=09
+}
+P.Paragraph-no-space {
+	MARGIN: 0in 0in 0pt
+}
+.Program {
+	FONT-FAMILY: monospace; WHITE-SPACE: pre; FONT-SIZE: 10pt; FONT-WEIGHT: =
+bold
+}
+.Program-light {
+	FONT-FAMILY: monospace; WHITE-SPACE: pre; FONT-SIZE: 10pt
+}
+SPAN.Bold {
+	FONT-WEIGHT: bold
+}
+SPAN.computer {
+	FONT-FAMILY: monospace; FONT-SIZE: 10pt; FONT-WEIGHT: bold
+}
+SPAN.H {
+	FONT-SIZE: 75%; VERTICAL-ALIGN: super
+}
+SPAN.Italic {
+	FONT-STYLE: italic
+}
+TD.is-grid-bit {
+	FONT-FAMILY: sans-serif; FONT-SIZE: 8pt; FONT-WEIGHT: bold
+}
+TD.is-grid-label {
+	FONT-FAMILY: sans-serif; FONT-SIZE: 10pt; FONT-WEIGHT: bold
+}
+
+------=_NextPart_000_0000_01CD473B.05AC8F90--

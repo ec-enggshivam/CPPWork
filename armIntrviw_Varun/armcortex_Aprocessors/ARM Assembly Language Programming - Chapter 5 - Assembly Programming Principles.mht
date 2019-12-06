@@ -1,0 +1,2065 @@
+From: "Saved by Windows Internet Explorer 8"
+Subject: ARM Assembly Language Programming - Chapter 5 - Assembly Programming Principles
+Date: Sun, 10 Jun 2012 18:56:55 +0530
+MIME-Version: 1.0
+Content-Type: multipart/related;
+	type="text/html";
+	boundary="----=_NextPart_000_001A_01CD473A.CE244090"
+X-MimeOLE: Produced By Microsoft MimeOLE V6.1.7600.16807
+
+This is a multi-part message in MIME format.
+
+------=_NextPart_000_001A_01CD473A.CE244090
+Content-Type: text/html;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Content-Location: http://www.peter-cockerell.net/aalp/html/ch-5.html
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD><TITLE>ARM Assembly Language Programming - Chapter 5 - =
+Assembly Programming Principles</TITLE>
+<META content=3Dtext/html;charset=3Diso-8859-1 =
+http-equiv=3Dcontent-type><LINK=20
+rel=3Dstylesheet type=3Dtext/css=20
+href=3D"http://www.peter-cockerell.net/aalp/html/aalp.css">
+<META name=3DGENERATOR content=3D"MSHTML 8.00.7600.16891"></HEAD>
+<BODY>
+<P class=3DHeading-1>5. Assembly Programming Principles</P>
+<P class=3DMain-Paragraph>The previous chapters have covered the ARM =
+instruction=20
+set, and using the ARM assembler. Now we are in a position to start =
+programming=20
+properly. Since we are assuming you can program in BASIC, most of this =
+chapter=20
+can be viewed as a conversion course. It illustrates with examples how =
+the=20
+programming techniques that you use when writing in a high-level =
+language=20
+translate into assembler.</P>
+<P class=3DHeading-2>5.1 Control structures</P>
+<P class=3DHeading-3>Some theory</P>
+<P class=3DMain-Paragraph>A program is made up of instructions which =
+implement the=20
+solution to a problem. Any such solution, or algorithm, may be expressed =
+in=20
+terms of a few fundamental concepts. Two of the most important are =
+program=20
+decomposition and flow of control.</P>
+<P class=3DMain-Paragraph>The composition of a program relates to how it =
+is split=20
+into smaller units which solve a particular part of the problem. When =
+combined,=20
+these units, or sub-programs, form a solution to the problem as a whole. =
+In=20
+high-level languages such as BASIC and Pascal, the procedure mechanism =
+allows=20
+the practical decomposition of programs into smaller, more manageable =
+units.=20
+Down at the assembly language level, subroutines perform the same =
+function.</P>
+<P class=3DMain-Paragraph>Flow of control in a program is the order in =
+which the=20
+instructions are executed. The three important types of control =
+structure that=20
+have been identified are: the sequence, iteration, and decision.</P>
+<P class=3DMain-Paragraph>An instruction sequence is simply the act of =
+executing=20
+instructions one after another in the order in which they appear in the =
+program.=20
+On the ARM, this action is a consequence of the PC being incremented =
+after each=20
+instruction, unless it is changed explicitly.</P>
+<P class=3DMain-Paragraph>The second type of control flow is decision: =
+the ability=20
+to execute a sequence of instructions only if a certain condition holds =
+(e.g.=20
+<SPAN class=3Dcomputer>IF...THEN...</SPAN>). Extensions of this are the =
+ability to=20
+take two separate, mutually exclusive paths (<SPAN=20
+class=3Dcomputer>IF</SPAN>...<SPAN class=3Dcomputer>THEN</SPAN>...<SPAN=20
+class=3Dcomputer>ELSE</SPAN>...), and a multi-way decision based on some =
+value=20
+(<SPAN class=3Dcomputer>ON...</SPAN><SPAN =
+class=3Dcomputer>PROC...</SPAN>). All of=20
+these structures are available to the assembly language programmer, but =
+he has=20
+to be more explicit about his intentions.</P>
+<P class=3DMain-Paragraph>Iteration means looping. Executing the same =
+set of=20
+instructions over and over again is one of the computer's fortes. =
+High-level=20
+languages provide constructs such as <SPAN =
+class=3Dcomputer>REPEAT</SPAN>..<SPAN=20
+class=3Dcomputer>UNTIL</SPAN> and <SPAN =
+class=3Dcomputer>FOR</SPAN>...<SPAN=20
+class=3Dcomputer>NEXT</SPAN> to implement iteration. Again, in assembler =
+you have=20
+to spell out the desired action a little more explicitly, using backward =
+
+(perhaps conditional) branches.</P>
+<P class=3DHeading-3>Some practice</P>
+<P class=3DMain-Paragraph>Having talked about program structures in a =
+fairly=20
+abstract way, we now look at some concrete examples. Because we are =
+assuming you=20
+have some knowledge of BASIC, or similar high-level language, the =
+structures=20
+found therein will be used as a starting point. We will present faithful =
+copies=20
+of <SPAN class=3Dcomputer>IF</SPAN>...<SPAN =
+class=3Dcomputer>THEN</SPAN>...<SPAN=20
+class=3Dcomputer>ELSE</SPAN>, <SPAN class=3Dcomputer>FOR</SPAN>...<SPAN=20
+class=3Dcomputer>NEXT</SPAN> etc. using ARM assembler. However, one of =
+the=20
+advantages of using assembly language is its versatility; you shouldn't =
+restrict=20
+yourself to slavishly mimicking the techniques you use in BASIC, if some =
+other=20
+more appropriate method suggests itself.</P>
+<P class=3DHeading-3>Position-independence</P>
+<P class=3DMain-Paragraph>Some of the examples below (for example the =
+<SPAN=20
+class=3Dcomputer>ON</SPAN>...<SPAN class=3Dcomputer>PROC</SPAN> =
+implementation using=20
+a branch table) may seem slightly more complex than necessary. In =
+particular,=20
+addressing of data and routines is performed not by loading addresses =
+into=20
+registers, but by performing a calculation (usually 'hidden' in an <SPAN =
+
+class=3Dcomputer>ADR</SPAN> directive) to obtain the same address. This =
+seemingly=20
+needless complexity is due to a desire to make the programs=20
+position-independent.</P>
+<P class=3DMain-Paragraph>Position-independent code has the property =
+that it will=20
+execute correctly no matter where in memory it is loaded. In order to =
+possess=20
+this property, the code must contain no references to absolute objects. =
+That is,=20
+any internal data or routines accessed must be referenced with respect =
+to some=20
+fixed point in the program. As the offset from the required location to =
+the=20
+fixed point remains constant, the address of the object may be =
+calculated=20
+regardless of where the program was loaded. Usually, addresses are =
+calculated=20
+with respect to the current instruction. You would often see =
+instructions of the=20
+form:</P>
+<P class=3DProgram>.here ADD ptr, pc, #object-(here+8)</P>
+<P class=3DMain-Paragraph>to obtain the address of <SPAN=20
+class=3Dcomputer>object</SPAN> in the register <SPAN =
+class=3Dcomputer>ptr</SPAN>.=20
+The +8 part occurs because the PC is always two instructions (8 bytes) =
+further=20
+on than the instruction which is executing, due to pipelining.</P>
+<P class=3DMain-Paragraph>It is because of the frequency with which this =
+
+calculation crops up that the <SPAN class=3Dcomputer>ADR</SPAN> =
+directive is=20
+provided. As we explained in Chapter Four, the line above could be =
+written:</P>
+<P class=3DProgram>ADR ptr, object</P>
+<P class=3DMain-Paragraph>There is no need for a label: BASIC performs =
+the=20
+calculation using the current value of P%.</P>
+<P class=3DMain-Paragraph>Instead of using PC offsets, a program can =
+also access=20
+its data using base-relative addressing. In this scheme, a register is =
+chosen to=20
+store the base address of the program's data. It is initialised in some=20
+position-independent way at the start of the program, then all data =
+accesses are=20
+relative to this. The ARM's register-offset address mode in <SPAN=20
+class=3Dcomputer>LDR</SPAN> and <SPAN class=3Dcomputer>STR</SPAN> make =
+this quite a=20
+straightforward way of accessing data.</P>
+<P class=3DMain-Paragraph>Why strive for position-independence? In a =
+typical ARM=20
+system, the programs you write will be loaded into RAM, and may have to =
+share=20
+that RAM with other programs. The operating system will find a suitable =
+location=20
+for the program and load it there. As 'there' might be anywhere in the =
+available=20
+memory range, your program can make no assumptions about the location of =
+its=20
+internal routines and data. Thus all references must be relative to the =
+PC. It=20
+is for this reason that branches use offsets instead of absolute =
+addresses, and=20
+that the assembler provides the</P>
+<P class=3DProgram>LDR &lt;dest&gt;,&lt;expression&gt;</P>
+<P class=3DMain-Paragraph>form of <SPAN class=3Dcomputer>LDR</SPAN> and =
+<SPAN=20
+class=3Dcomputer>STR</SPAN> to automatically form PC-relative addresses. =
+</P>
+<P class=3DMain-Paragraph>Many microprocessors (especially the older, =
+eight-bit=20
+ones) make it impossible to write position-independent code because of=20
+unsuitable instructions and architectures. The ARM makes it relatively =
+easy, and=20
+you should take advantage of this.</P>
+<P class=3DMain-Paragraph>Of course, there are bound to be some absolute =
+
+references in the program. You may have to call external subroutines in =
+the=20
+operating system. The usual way of doing this is to use a <SPAN=20
+class=3Dcomputer>SWI</SPAN>, which implicitly calls absolute address =
+&amp;0000008.=20
+Pointers handed to the program by memory-allocation routines will be =
+absolute,=20
+but as they are external to the program, this doesn't matter. The thing =
+to avoid=20
+is absolute references to internal objects.</P>
+<P class=3DHeading-3>Sequences</P>
+<P class=3DMain-Paragraph>These barely warrant a mention. As we have =
+already=20
+implied, ARM instructions execute sequentially unless the processor is=20
+instructed to do otherwise. Sequence of high-level assignments:</P>
+<P class=3DProgram>LET a =3D b+c<BR>LET d =3D b-c</P>
+<P class=3DMain-Paragraph>would be implemented by a similar sequence of =
+ARM=20
+instructions:</P>
+<P class=3DProgram>ADD ra, rb, rc<BR>SUB rd, rb, rc</P>
+<P class=3DHeading-3>IF-type conditions</P>
+<P class=3DMain-Paragraph>Consider the BASIC statement:</P>
+<P class=3DProgram>IF a=3Db THEN count=3Dcount+1</P>
+<P class=3DMain-Paragraph>This maps quite well into the following ARM=20
+sequence:</P>
+<P class=3DProgram>CMP ra, rb<BR>ADDEQ count, count, #1</P>
+<P class=3DMain-Paragraph>In this and other examples, we will assume =
+operands are=20
+in registers to avoid lots of <SPAN class=3Dcomputer>LDR</SPAN>s and =
+<SPAN=20
+class=3Dcomputer>STR</SPAN>s. In practice, you may find a certain amount =
+of=20
+processor-to-memory transfer has to be made.</P>
+<P class=3DMain-Paragraph>The ARM's ability to execute any instruction=20
+conditionally enables us to make a straightforward conversion from =
+BASIC.=20
+Similarly, a simple <SPAN class=3Dcomputer>IF</SPAN>..<SPAN=20
+class=3Dcomputer>THEN</SPAN>...<SPAN class=3Dcomputer>ELSE</SPAN> such =
+as this=20
+one</P>
+<P class=3DProgram>IF val&lt;0 THEN sign=3D-1 ELSE sign=3D1</P>
+<P class=3DMain-Paragraph>leads to the ARM equivalent:</P>
+<P class=3DProgram>TEQ val, #0<BR>MVNMI sign, #0<BR>MOVPL sign, #1</P>
+<P class=3DMain-Paragraph>The opposite conditions (<SPAN =
+class=3Dcomputer>MI</SPAN>=20
+and <SPAN class=3Dcomputer>PL</SPAN>) on the two instructions make them =
+mutually=20
+exclusive (i.e. one and only one of them will be executed after the =
+<SPAN=20
+class=3Dcomputer>TEQ</SPAN>), corresponding to the same property in the =
+<SPAN=20
+class=3Dcomputer>THEN</SPAN> and <SPAN class=3Dcomputer>ELSE</SPAN> =
+parts of the=20
+BASIC statement.</P>
+<P class=3DMain-Paragraph>There is usually a practical limit to how many =
+
+instructions may be executed conditionally in one sequence. For example, =
+one of=20
+the conditional instructions may itself affect the flags, so the =
+original=20
+condition no longer holds. A multi-word <SPAN =
+class=3Dcomputer>ADD</SPAN> will=20
+need to affect the carry flag, so this operation couldn't be performed =
+using=20
+conditional execution. The solution (and the <SPAN =
+class=3DItalic>only</SPAN>=20
+method that most processors can use) is to conditionally branch over =
+unwanted=20
+instructions.</P>
+<P class=3DMain-Paragraph>Below is an example of a two-word add which =
+executes=20
+only if R0=3DR1:</P>
+<P class=3DProgram>CMP R0, R1<BR>BNE noAdd<BR>ADDS lo1, lo1, lo2<BR>ADC =
+hi1, hi1,=20
+hi2<BR>.noAdd ...</P>
+<P class=3DMain-Paragraph>Notice that the condition used in the branch =
+is the=20
+opposite to that under which the <SPAN class=3Dcomputer>ADD</SPAN> is to =
+be=20
+performed. Here is the general translation of the BASIC statements:</P>
+<P class=3DProgram>IF cond THEN sequence1 ELSE sequence2 =
+statement<BR>;'ARM'=20
+version<BR>;Obtain &lt;cond&gt;<BR>B&lt;NOT cond&gt; seq2 ;If =
+&lt;cond&gt; fails=20
+then jump to ELSE<BR>sequence1 ;Otherwise do the THEN part<BR>...<BR>BAL =
+endSeq2=20
+;Skip over the ELSE part<BR>.seq2<BR>sequence2 ;This gets executed if=20
+&lt;cond&gt; fails<BR>...<BR>.endSeq2<BR>statement ;The paths re-join =
+here</P>
+<P class=3DMain-Paragraph>At the end of the <SPAN =
+class=3Dcomputer>THEN</SPAN>=20
+sequence is an unconditional branch to skip the <SPAN =
+class=3Dcomputer>ELSE</SPAN>=20
+part. The two paths rejoin at <SPAN class=3Dcomputer>endSeq2</SPAN>.</P>
+<P class=3DMain-Paragraph>It is informative to consider the relative =
+timings of=20
+skipped instructions and conditionally executed ones. Suppose the =
+conditional=20
+sequence consists of X group one instructions. The table below gives the =
+timings=20
+in cycles for the cases when they are executed and not executed, using =
+each=20
+method:</P>
+<TABLE border=3D1 cellSpacing=3D0 cellPadding=3D2>
+  <TBODY>
+  <TR>
+    <TD>&nbsp;</TD>
+    <TD>
+      <P class=3DHeading-4>Branch</P></TD>
+    <TD>
+      <P class=3DHeading-4>Conditional</P></TD></TR>
+  <TR>
+    <TD>
+      <P class=3DHeading-4>Executed</P></TD>
+    <TD align=3Dmiddle>s&nbsp;+&nbsp;Xs</TD>
+    <TD align=3Dmiddle>Xs</TD></TR>
+  <TR>
+    <TD>
+      <P class=3DHeading-4>Not executed</P></TD>
+    <TD align=3Dmiddle>2n&nbsp;+ s</TD>
+    <TD align=3Dmiddle>Xs</TD></TR></TBODY></TABLE>
+<P class=3DMain-Paragraph>In the case where the instructions are =
+executed, the=20
+branch method has to execute the un-executed branch, giving an extra =
+cycle. This=20
+gives us the rather predictable result that if the conditional sequence =
+is only=20
+one instruction, the conditional execution method should always be =
+used.</P>
+<P class=3DMain-Paragraph><SPAN class=3DBold></SPAN></P>
+<P class=3DMain-Paragraph>When the sequence is skipped because the =
+condition is=20
+false, the branch method takes 2n+s, or the equivalent to 5s cycles. The =
+
+conditional branch method takes one s cycles for each un-executed =
+instruction.=20
+So, if there are four or fewer instructions, at least one cycle is saved =
+using=20
+conditional instructions. Of course, whether this makes the program =
+execute any=20
+faster depends on the ratio between failures and successes of the =
+condition.</P>
+<P class=3DMain-Paragraph>Before we leave the <SPAN =
+class=3Dcomputer>IF</SPAN>-type=20
+constructions, we present a nice way of implementing conditions such =
+as:</P>
+<P class=3DProgram>IF a=3D1 OR a=3D5 OR a=3D12...</P>
+<P class=3DMain-Paragraph>It uses conditional execution:</P>
+<P class=3DProgram>TEQ a,#1<BR>TEQNE a,#5<BR>TEQNE a,#12<BR>BNE =
+failed</P>
+<P class=3DMain-Paragraph>If the first <SPAN class=3Dcomputer>TEQ</SPAN> =
+gives an=20
+<SPAN class=3Dcomputer>EQ</SPAN> result (i.e. <SPAN =
+class=3Dcomputer>a</SPAN>=3D1),=20
+the next two instructions are skipped and the sequence ends with the =
+desired=20
+flag state. If <SPAN class=3Dcomputer>a</SPAN>&lt;&gt;1, the next <SPAN=20
+class=3Dcomputer>TEQ</SPAN> is executed, and again if this gives an =
+<SPAN=20
+class=3Dcomputer>EQ</SPAN> result, the last instruction is skipped. If =
+neither of=20
+those two succeed, the result of the whole sequence comes from the final =
+<SPAN=20
+class=3Dcomputer>TEQ</SPAN>.</P>
+<P class=3DMain-Paragraph>Another useful property of <SPAN=20
+class=3Dcomputer>TEQ</SPAN> is that it can be used to test the sign and =
+zero-ness=20
+of a register in one instruction. So a three-way decision could be made=20
+according to whether an operand was less than zero, equal to zero, or =
+greater=20
+than zero:</P>
+<P class=3DProgram>TEQ R0,#0<BR>BMI neg<BR>BEQ zero<BR>BPL plus</P>
+<P class=3DMain-Paragraph>In this example, one of three labels is jumped =
+to=20
+according to the sign of R0. Note that the last instruction could be an=20
+unconditional branch, as <SPAN class=3Dcomputer>PL</SPAN> must be true =
+if we've=20
+got that far.</P>
+<P class=3DMain-Paragraph>The sequence below performs the BASIC =
+assignment <SPAN=20
+class=3Dcomputer>a=3DABS(a)</SPAN> using conditional instructions:</P>
+<P class=3DProgram>TEQ a, #0<BR>RSBMI a, #0 ;if a&lt;0 then a=3D0-a</P>
+<P class=3DMain-Paragraph>As you have probably realised, conditional =
+instructions=20
+allow the elegant expression of many simple types of <SPAN=20
+class=3Dcomputer>IF</SPAN>... construct.</P>
+<P class=3DHeading-3>Multi-way branches</P>
+<P class=3DMain-Paragraph>Often, a program needs to take one of several =
+possible=20
+actions, depending on a value or a condition. There are two main ways of =
+
+implementing such a branch, depending on the tests made.</P>
+<P class=3DMain-Paragraph>If the action to be taken depends on one of a =
+few=20
+specific conditions, it is best implemented using explicit comparisons =
+and=20
+branches. For example, suppose we wanted to take one of three actions =
+depending=20
+on whether the character in the lowest byte of R0 was a letter, a digit =
+or some=20
+other character. Assuming that the character set being used is ASCII, =
+then this=20
+can be achieved thus:</P>
+<P class=3DProgram>CMP R0,#ASC"0" ;Less than the lowest digit?<BR>BCC =
+doOther=20
+;Yes, so must be 'other'<BR>CMP R0,#ASC"9" ;Is it a digit?<BR>BLS =
+doDigit=20
+;Yes<BR>CMP R0,#ASC"A" ;Between digits and upper case?<BR>BCC doOther =
+;Yes, so=20
+'other'<BR>CMP R0,#ASC"Z" ;Is it upper case?<BR>BLS doLetter ;Yes<BR>CMP =
+
+R0,#ASC"a" ;Between upper and lower case?<BR>BLT doOther ;Yes, so =
+'other'<BR>CMP=20
+R0,#ASC"z" ;Lower case?<BR>BHI doOther ;No, so =
+'other'<BR>.doLetter<BR>...<BR>B=20
+nextChar ;Process next character<BR>.doDigit<BR>...<BR>B nextChar =
+;Process next=20
+character<BR>.doOther<BR>...<BR>.nextChar<BR>...</P>
+<P class=3DMain-Paragraph>Note that by the time the character has been =
+sorted out,=20
+the flow of control has been divided into three possible routes. To make =
+the=20
+program easier to follow, the three destination labels should be close =
+to each=20
+other. It is very possible that after each routine has done its job, the =
+three=20
+paths will converge again into a single thread. To make this clear, each =
+routine=20
+is terminated by a commented branch to the meeting point.</P>
+<P class=3DMain-Paragraph>A common requirement is to branch to a given =
+routine=20
+according to a range of values. This is typified by BASIC's <SPAN=20
+class=3Dcomputer>ON...PROC</SPAN> and <SPAN class=3Dcomputer>CASE</SPAN> =
+statements.=20
+For example:</P>
+<P class=3DProgram>ON x PROCadd,PROCdelete,PROCamend,PROClist ELSE =
+PROCerror</P>
+<P class=3DMain-Paragraph>According to whether <SPAN =
+class=3Dcomputer>x</SPAN> has=20
+the value 1, 2, 3 or 4, one of the four procedures listed is executed. =
+The <SPAN=20
+class=3Dcomputer>ELSE</SPAN>... part allows for <SPAN =
+class=3Dcomputer>x</SPAN>=20
+containing a value outside of the expected range.</P>
+<P class=3DMain-Paragraph>One way of implementing an <SPAN=20
+class=3Dcomputer>ON</SPAN>... type structure in assembly language is =
+using=20
+repeated comparisons:</P>
+<P class=3DProgram>CMP choice, #1 ;Check against lower limit<BR>BCC =
+error ;Lower,=20
+so error<BR>BEQ add ;choice =3D 1 so add<BR>CMP choice, #3 ;Check for 2 =
+or=20
+3<BR>BLT delete ;choice =3D 2 so delete<BR>BEQ amend ;choice =3D 3 so =
+amend<BR>CMP=20
+choice, #4 ;Check against upper limit<BR>BEQ list ;If choice =3D 4 list =
+else=20
+error<BR>.error<BR>...</P>
+<P class=3DMain-Paragraph>Although this technique is fine for small =
+ranges, it=20
+becomes large and slow for wide ranges of <SPAN =
+class=3Dcomputer>choice</SPAN>. A=20
+better technique in this case it to use a branch table. A list of =
+branches to=20
+the routines is stored near the program, and this is used to branch to =
+the=20
+appropriate routine. Below is an implementation of the previous example =
+using=20
+this technique.</P>
+<P class=3DProgram>DIM org 200<BR>choice =3D 0<BR>t =3D 1<BR>sp =3D =
+13<BR>link =3D=20
+14<BR>REM Range of legal values<BR>min =3D 1<BR>max =3D 4<BR>WriteS =3D =
+1<BR>NewLine =3D=20
+3<BR>FOR pass=3D0 TO 2 STEP 2<BR>P%=3Dorg<BR>[ opt pass<BR>;Multiway =
+branch in ARM=20
+assembler<BR>;choice contains code, min..max of routine to call<BR>;If =
+out of=20
+range, error is called<BR>;<BR>STMFD (sp)!,{t,link}<BR>SUBS choice, =
+choice, #min=20
+;Choice &lt;min?<BR>BCC error ;Yes, so error<BR>CMP choice, #max-min =
+;Choice=20
+&gt;max?<BR>BHI error ;Yes, so error<BR>ADR link, return ;Set-up return=20
+address<BR>ADR t,table ;Get address of table base<BR>ADD PC, t, choice, =
+LSL #2=20
+;Jump to table+choice*4<BR>;<BR>.error<BR>SWI WriteS<BR>EQUS "Range=20
+error"<BR>EQUB 0<BR>ALIGN<BR>;<BR>.return<BR>SWI NewLine<BR>LDMFD=20
+(sp)!,{t,PC}<BR>;<BR>;<BR>;Table of branches to routines<BR>.table<BR>B =
+add<BR>B=20
+delete<BR>B amend<BR>B list<BR>;<BR>.add<BR>SWI WriteS<BR>EQUS "Add=20
+command"<BR>EQUB 0<BR>ALIGN<BR>MOV PC,link<BR>;<BR>.delete<BR>SWI =
+WriteS<BR>EQUS=20
+"Delete command"<BR>EQUB 0<BR>ALIGN<BR>MOV PC,link<BR>;<BR>.amend<BR>SWI =
+
+WriteS<BR>EQUS "Amend command"<BR>EQUB 0<BR>ALIGN<BR>MOV=20
+PC,link<BR>;<BR>.list<BR>SWI WriteS<BR>EQUS "List command"<BR>EQUB=20
+0<BR>ALIGN<BR>MOV PC,link<BR>]<BR>NEXT<BR>REPEAT<BR>INPUT "Choice=20
+",A%<BR>CALLorg<BR>UNTIL FALSE</P>
+<P class=3DMain-Paragraph>The first four lines check the range of the =
+value in=20
+<SPAN class=3Dcomputer>choice</SPAN>, and call <SPAN =
+class=3Dcomputer>error</SPAN>=20
+if it is outside of the range <SPAN class=3Dcomputer>min</SPAN> to <SPAN =
+
+class=3Dcomputer>max</SPAN>. It is important to do this, otherwise a =
+branch might=20
+be made to an invalid entry in the branch table. The first test uses =
+<SPAN=20
+class=3Dcomputer>SUBS</SPAN> instead of <SPAN =
+class=3Dcomputer>CMP</SPAN>, so choice=20
+is adjusted to the range 0 to <SPAN class=3Dcomputer>max-min</SPAN> =
+instead of=20
+<SPAN class=3Dcomputer>min</SPAN> to <SPAN =
+class=3Dcomputer>max</SPAN>.</P>
+<P class=3DMain-Paragraph>Next, the return address is placed in R14. The =
+routines=20
+<SPAN class=3Dcomputer>add</SPAN>, <SPAN class=3Dcomputer>delete</SPAN> =
+etc. return=20
+as if they had been called using <SPAN class=3Dcomputer>BL</SPAN>, i.e. =
+use a=20
+return address in R14. To do this, we use <SPAN =
+class=3Dcomputer>ADR</SPAN> to=20
+place the address of the label <SPAN class=3Dcomputer>return</SPAN> into =
+R14, this=20
+being where we want to resume execution.</P>
+<P class=3DMain-Paragraph>The next <SPAN class=3Dcomputer>ADR</SPAN> =
+obtains the=20
+base address of the jump table in the register <SPAN =
+class=3Dcomputer>t</SPAN>.=20
+Finally, the <SPAN class=3Dcomputer>ADD</SPAN> multiplies <SPAN=20
+class=3Dcomputer>choice</SPAN> by 4 (using two left shifts) and adds =
+this offset=20
+to the table's base address. The result of the addition is placed in the =
+program=20
+counter. This causes execution to jump to the branch instruction in the =
+table=20
+that was denoted by <SPAN class=3Dcomputer>choice</SPAN>. From there, =
+the=20
+appropriate routine is called, with the return address still in R14.</P>
+<P class=3DMain-Paragraph>As we mentioned in the position-independent =
+code=20
+section, this may seem a little bit involved just to jump to one of four =
+
+locations. Remember though that the technique will work for an arbitrary =
+number=20
+of entries in the table, and will work at whatever address the program =
+is=20
+loaded.</P>
+<P class=3DHeading-3>Loops</P>
+<P class=3DMain-Paragraph>Looping is vital to any non-trivial program. =
+Many=20
+problems have solutions that are expressed in an iterative fashion. =
+There are=20
+two important classes of looping construct. The first is looping while, =
+or=20
+until, a given condition is met (e.g. <SPAN =
+class=3Dcomputer>REPEAT</SPAN> and=20
+<SPAN class=3Dcomputer>WHILE</SPAN> loops in BASIC). The second is =
+looping for a=20
+given number of iterations (e.g. <SPAN class=3Dcomputer>FOR</SPAN> =
+loops). In=20
+fact, the second class is really a special case of the general =
+conditional loop,=20
+the condition being that the loop has iterated the correct number of =
+times.</P>
+<P class=3DMain-Paragraph>An important characteristic of any looping =
+construct is=20
+where the test of the looping condition is made. In BASIC <SPAN=20
+class=3Dcomputer>REPEAT</SPAN> loops, for example, the test is made at =
+the=20
+corresponding <SPAN class=3Dcomputer>UNTIL</SPAN>. This means that the=20
+instructions in the loop are always executed at least once. Consider =
+this=20
+example:</P>
+<P class=3DProgram>REPEAT<BR>IF a&gt;b THEN a=3Da-b ELSE =
+b=3Db-a<BR>UNTIL a=3Db</P>
+<P class=3DMain-Paragraph>This is a simple way to find the greatest =
+common divisor=20
+(GCD) of <SPAN class=3Dcomputer>a</SPAN> and <SPAN =
+class=3Dcomputer>b</SPAN>. If=20
+<SPAN class=3Dcomputer>a</SPAN>=3D<SPAN class=3Dcomputer>b</SPAN> (and =
+<SPAN=20
+class=3Dcomputer>a</SPAN>&lt;&gt;0) when the loop is entered, the result =
+is an=20
+infinite loop as on the first iteration <SPAN =
+class=3Dcomputer>b=3Db-a</SPAN> will=20
+be executed, setting <SPAN class=3Dcomputer>b</SPAN> to 0. From then on, =
+<SPAN=20
+class=3Dcomputer>a=3Da-0</SPAN> will be executed, which will never make =
+<SPAN=20
+class=3Dcomputer>a</SPAN>=3D<SPAN class=3Dcomputer>b</SPAN>.</P>
+<P class=3DMain-Paragraph>The <SPAN class=3Dcomputer>WHILE</SPAN> loop =
+tests the=20
+condition at the 'top', before its statements have been executed at =
+all:</P>
+<P class=3DProgram>WHILE a&lt;&gt;b <BR>IF a&gt;b THEN a=3Da-b ELSE=20
+b=3Db-a<BR>ENDWHILE</P>
+<P class=3DMain-Paragraph>This time, if <SPAN =
+class=3Dcomputer>a</SPAN>=3D<SPAN=20
+class=3Dcomputer>b</SPAN>, the condition at the top will fail, so the =
+loop will=20
+never be executed, leaving <SPAN class=3Dcomputer>a</SPAN>=3D<SPAN=20
+class=3Dcomputer>b</SPAN>=3DGCD(<SPAN class=3Dcomputer>a</SPAN>,<SPAN=20
+class=3Dcomputer>b</SPAN>).</P>
+<P class=3DMain-Paragraph>Below are the two ARM equivalents of the <SPAN =
+
+class=3Dcomputer>REPEAT</SPAN> and <SPAN class=3Dcomputer>WHILE</SPAN> =
+loop versions=20
+of the GCD routine:</P>
+<P class=3DProgram>;Find the GCD of ra,rb.<BR>;Fallible version using =
+'repeat'=20
+loop<BR>.repeat<BR>CMP ra,rb ;REPEAT IF a&gt;b<BR>SUBGT ra,ra,rb ; THEN=20
+a=3Da-b<BR>SUBLE rb,rb,ra ; ELSE b=3Db-a<BR>CMP ra,rb ;UNTIL<BR>BNE =
+repeat ;a=3Db=20
+<BR>;</P>
+<P class=3DProgram>;Find GCD of ra,rb, using 'while' =
+loop<BR>.while<BR>CMP ra,rb=20
+;WHILE a&lt;&gt;b<BR>BNE endwhile <BR>SUBGT ra,ra,rb ; IF a&gt;b THEN =
+a=3Da-b=20
+<BR>SUBLE rb,rb,ra ; ELSE b=3Db-a<BR>B while ;ENDWHILE<BR>.endwhile</P>
+<P class=3DMain-Paragraph>Notice that the difference between the two is =
+that the=20
+<SPAN class=3Dcomputer>WHILE</SPAN> requires a forward branch to skip =
+the=20
+instructions in the body of the loop. This is not a problem for an =
+assembler,=20
+which has to cope with forward references to be of any use at all. In an =
+
+interpreted language like BASIC, though, the need to scan through a =
+program=20
+looking for a matching <SPAN class=3Dcomputer>ENDWHILE</SPAN> is =
+something of a=20
+burden, which is why some BASIC's don't have such structures.</P>
+<P class=3DMain-Paragraph>Because both of the code sequences above are =
+direct=20
+translations of high-level versions, they are indicative of what we =
+might expect=20
+a good compiler to produce. However, we are better than any compiler, =
+and can=20
+optimise both sequences slightly by a bit of observation. In the first =
+loop, we=20
+branch back to an instruction which we have just executed, wasting a =
+little=20
+time. In the second case, we can use the conditional instructions to =
+eliminate=20
+the first branch entirely. Here are the hand-coded versions:</P>
+<P class=3DProgram>;Fallible version using 'repeat' <BR>CMP ra,rb =
+;REPEAT IF=20
+a&gt;b <BR>.repeat<BR>SUBGT ra,ra,rb ; THEN a=3Da-b <BR>SUBLE rb,rb,ra ; =
+ELSE=20
+b=3Db-a<BR>CMP ra,rb ;UNTIL<BR>BNE repeat ;a=3Db <BR>; </P>
+<P class=3DProgram>;Find GCD of ra,rb, using 'while' =
+loop<BR>.while<BR>CMP ra,rb=20
+;REPEAT<BR>SUBGT ra,ra,rb ; IF a&gt;b THEN a=3Da-b<BR>SUBLT rb,rb,ra ; =
+ELSE IF=20
+a&lt;b b=3Db-a<BR>BNE while ;UNTIL a=3Db endwhile</P>
+<P class=3DMain-Paragraph>By optimising, we have converted the <SPAN=20
+class=3Dcomputer>WHILE</SPAN> loop into a <SPAN =
+class=3Dcomputer>REPEAT</SPAN> loop=20
+with a slightly different body.</P>
+<P class=3DMain-Paragraph>In general, a <SPAN =
+class=3Dcomputer>REPEAT</SPAN>-type=20
+structure is used when the processing in the 'body' of the loop will be =
+needed=20
+at least once, whereas <SPAN class=3Dcomputer>WHILE</SPAN>-type loops =
+have to be=20
+used in situations where the 'null' case is a distinct possibility. For =
+example,=20
+string handling routines in the BASIC interpreter have to deal with =
+zero-length=20
+strings, which often means a <SPAN class=3Dcomputer>WHILE</SPAN> looping =
+structure=20
+is used. (See the string-handling examples later.)</P>
+<P class=3DMain-Paragraph>A common special case of the <SPAN=20
+class=3Dcomputer>REPEAT</SPAN> loop is the infinite loop, expressed =
+as:</P>
+<P class=3DProgram>REPEAT <BR>REM do something<BR>UNTIL FALSE</P>
+<P class=3DMain-Paragraph>or in ARM assembler:</P>
+<P class=3DProgram>.loop<BR>; do something<BR>BAL loop</P>
+<P class=3DMain-Paragraph>Programs which exhibit this behaviour are =
+often=20
+interactive ones which take an arbitrary amount of input from the user. =
+Again=20
+the BASIC interpreter is a good example. The exit from such programs is =
+usually=20
+through some 'back door' method (e.g. calling another program) rather =
+than some=20
+well-defined condition.</P>
+<P class=3DMain-Paragraph>Since <SPAN class=3Dcomputer>FOR</SPAN> loops =
+are a=20
+special case of general loops, they can be expressed in terms of them. =
+The <SPAN=20
+class=3Dcomputer>FOR</SPAN> loop in BBC BASIC exhibits a <SPAN=20
+class=3Dcomputer>REPEAT</SPAN>-like behaviour, in that the test for =
+termination is=20
+performed at the end, and it executes at least once. Below is a typical =
+<SPAN=20
+class=3Dcomputer>FOR</SPAN> loop and its <SPAN =
+class=3Dcomputer>REPEAT</SPAN>=20
+equivalent:</P>
+<P class=3DProgram>REM A typical for loop <BR>FOR ch=3D32 TO 126 <BR>VDU =
+ch<BR>NEXT=20
+ch<BR>REM REPEAT loop equivalent<BR>ch=3D32<BR>REPEAT<BR>VDU=20
+ch<BR>ch=3Dch+1<BR>UNTIL ch&gt;126</P>
+<P class=3DMain-Paragraph>The initial assignment is placed just before =
+the <SPAN=20
+class=3Dcomputer>REPEAT</SPAN>. The body of the <SPAN =
+class=3Dcomputer>REPEAT</SPAN>=20
+is the same as that for the <SPAN class=3Dcomputer>FOR</SPAN>, with the =
+addition=20
+of the incrementing of <SPAN class=3Dcomputer>ch</SPAN> just before the =
+condition.=20
+The condition is that <SPAN class=3Dcomputer>ch</SPAN> is greater than =
+the limit=20
+given in the <SPAN class=3Dcomputer>FOR</SPAN> statement.</P>
+<P class=3DMain-Paragraph>We can code the <SPAN =
+class=3Dcomputer>FOR</SPAN> loop in=20
+ARM assembler by working from the <SPAN class=3Dcomputer>REPEAT</SPAN> =
+loop=20
+version:</P>
+<P class=3DProgram>;Print characters 32..126 using a FOR loop-type=20
+construct<BR>;R0 holds the character<BR>MOV R0, #32 ;Init the=20
+character<BR>.loop<BR>SWI WriteC ;Print it<BR>ADD R0, R0, #1 ;Increment=20
+it<BR>CMP R0, #126 ;Check the limit<BR>BLE loop ;Loop if not =
+finished<BR>;</P>
+<P class=3DMain-Paragraph>Very often, we want to do something a fixed =
+number of=20
+times, which could be expressed as a loop beginning <SPAN =
+class=3Dcomputer>FOR i=3D1=20
+TO n</SPAN>... in BASIC. When such loops are encountered in assembler, =
+we can=20
+use the fact that zero results of group one instructions can be made to =
+set the=20
+Z flag. In such cases, the updating of the looping variable and the test =
+for=20
+termination can be combined into one instruction.</P>
+<P class=3DMain-Paragraph>For example, to print ten stars on the =
+screen:</P>
+<P class=3DProgram>FOR i=3D1 TO 10<BR>PRINT "*";<BR>NEXT i</P>
+<P class=3DMain-Paragraph>could be re-coded in the form:</P>
+<P class=3DProgram>;Print ten stars on the screen<BR>;R0 holds the star =
+character,=20
+R1 the count<BR>MOV R0,#ASC"*" ;Init char to print<BR>MOV R1,#10 ;Init=20
+count<BR>.loop<BR>SWI WriteC ;Print a star<BR>SUBS R1,R1,#1 ;Next<BR>BNE =
+
+loop<BR>;</P>
+<P class=3DMain-Paragraph>The <SPAN class=3Dcomputer>SUBS</SPAN> will =
+set the Z flag=20
+after the tenth time around the loop (i.e. when R1 reaches 0), so we do =
+not have=20
+to make an explicit test.</P>
+<P class=3DMain-Paragraph>Of course, if the looping variable's current =
+value was=20
+used in the body of the loop, this method could not be used (unless the =
+loop was=20
+of the form <SPAN class=3Dcomputer>FOR i=3Dn TO 1 STEP -1</SPAN>...) as =
+we are=20
+counting down from the limit, instead of up from 1.</P>
+<P class=3DMain-Paragraph>Some high-level languages provide means of =
+repeating a=20
+loop before the end or exiting from the current loop prematurely. These =
+two=20
+looping 'extras' are typified by the <SPAN =
+class=3Dcomputer>continue</SPAN> and=20
+<SPAN class=3Dcomputer>break</SPAN> statements in the C language. <SPAN=20
+class=3Dcomputer>Continue</SPAN> causes a jump to be made to just after =
+the last=20
+statement inside the current <SPAN class=3Dcomputer>FOR</SPAN>, <SPAN=20
+class=3Dcomputer>WHILE</SPAN> or <SPAN =
+class=3Dcomputer>REPEAT</SPAN>-type loop, and=20
+<SPAN class=3Dcomputer>break</SPAN> does a jump to the first statement =
+after the=20
+current loop.</P>
+<P class=3DMain-Paragraph>Because <SPAN class=3Dcomputer>continue</SPAN> =
+and <SPAN=20
+class=3Dcomputer>break</SPAN> cause the flow of control to diverge from =
+the=20
+expected action of a loop, they can make the program harder to follow =
+and=20
+understand. They are usually only used to 'escape' from some infrequent =
+or error=20
+condition. Both constructs may be implemented in ARM using conditional =
+or=20
+unconditional branches.</P>
+<P class=3DHeading-2>5.2 Subroutines and procedures</P>
+<P class=3DMain-Paragraph>We have now covered the main control flow =
+structures.=20
+Programs written using just these constructs would be very large and =
+hard to=20
+read. The sequence, decision and loop constructs help to produce an =
+ordered=20
+solution to a given problem. However, they do not contribute to the =
+division of=20
+the problem into smaller, more manageable units. This is where =
+subroutines come=20
+in.</P>
+<P class=3DMain-Paragraph>Even the most straightforward of problems that =
+one is=20
+likely to use computer to solve can be decomposed into a set of simpler, =
+shorter=20
+sub-programs. The motivations for performing this decomposition are =
+several.=20
+Humans can only take in so much information at once. In terms of =
+programming, a=20
+page of listing is a useful limit to how much a programmer can =
+reasonably be=20
+expected to digest in one go. Also, by implementing the solution to a =
+small part=20
+of a problem, you may be writing the same part of a later program. It is =
+
+surprising how much may be accomplished using existing 'library' =
+routines,=20
+without having to re-invent the wheel every time.</P>
+<P class=3DMain-Paragraph>The topics of program decomposition and =
+top-down,=20
+structured programming are worthy of books in their own right, and it is =
+
+recommended that you consult these if you wish to write good programs in =
+any=20
+language. The discipline of structured programming is even more =
+important in=20
+assembler than in, say, Pascal, because it is easier to write =
+treacherously=20
+unreadable code in assembler.</P>
+<P class=3DMain-Paragraph>A minimal decomposition of most programs is =
+shown in the=20
+block diagram overleaf. Data is taken in, processed in some way, then =
+results=20
+output. If you think about it, most programs would be rather boring if =
+they=20
+depended on absolutely no external stimulus for their results.</P>
+<P class=3DMain-Paragraph>Once the input, processing and output stages =
+have been=20
+identified, work can begin on solving these individual parts. Almost =
+invariably=20
+this will involve further decomposition, until eventually a set of =
+routines will=20
+be obtained which can be written directly in a suitably small number of =
+basic=20
+instructions.</P>
+<P class=3DParagraph-no-space>The way in which these routines are linked =
+together,=20
+and how they communicate with each other, are the subjects of the next=20
+sections.</P>
+<DIV align=3Dleft>
+<P class=3DHeading-4><A=20
+href=3D"http://www.peter-cockerell.net/aalp/html/images/fig5-1-hi.jpg"><I=
+MG=20
+border=3D0 =
+src=3D"http://www.peter-cockerell.net/aalp/html/images/fig5-1-hi.jpg"=20
+width=3D240 height=3D265></A></P></DIV>
+<P class=3DHeading-3>Branch and link</P>
+<P class=3DMain-Paragraph>The ARM <SPAN class=3Dcomputer>BL</SPAN> =
+instruction is a=20
+subroutine-calling primitive. Primitive in this context means an =
+operation which=20
+is implemented at the lowest level, with no more hidden detail.</P>
+<P class=3DMain-Paragraph>Recall from Chapter Three that <SPAN=20
+class=3Dcomputer>BL</SPAN> causes a branch to a given address, and =
+stores the=20
+return address in R14. We will illustrate the use of <SPAN=20
+class=3Dcomputer>BL</SPAN> to call the three routines which solve a very =
+simple=20
+problem. This may be expressed as follows: repeatedly read a single =
+character=20
+from the keyboard and if it is not the NUL character (ASCII code 0), =
+print the=20
+number of 1 bits in the code.</P>
+<P class=3DMain-Paragraph>For comparison, the BASIC program below solves =
+the=20
+problem using exactly the same structure as the following ARM =
+version:</P>
+<P class=3DProgram>REPEAT ch =3D FNreadChar<BR>IF ch&lt;&gt;0=20
+PROCoutput(FNprocess(ch))<BR>UNTIL ch=3D0<BR>END<BR>REM=20
+*******************************************<BR>DEF =
+FNreadChar=3DGET<BR>REM=20
+*******************************************<BR>DEF =
+FNprocess(ch)<BR>LOCAL=20
+count<BR>count=3D0<BR>REPEAT<BR>count=3Dcount + ch MOD 2<BR>ch=3Dch DIV =
+2<BR>UNTIL=20
+ch=3D0<BR>=3Dcount<BR>REM =
+*******************************************<BR>DEF=20
+PROCoutput(num)<BR>PRINT num<BR>ENDPROC</P>
+<P class=3DMain-Paragraph>There are four entities, separated by the =
+lines of=20
+asterisks. At the top is the 'main program'. This is at the highest =
+level and is=20
+autonomous: no other routine calls the program. The next three sections =
+are the=20
+routines which the main program uses to solve the problem. As this is a =
+fairly=20
+trivial example, none of the subroutines calls any other; they are all =
+made from=20
+primitive instructions. Usually (and especially in assembly language =
+where=20
+primitives are just that), these 'second level' routines would call even =
+simpler=20
+ones, and so on.</P>
+<P class=3DMain-Paragraph>Below is the listing of the ARM assembler =
+version of the=20
+program:</P>
+<P class=3DProgram>DIM org 200<BR>sp =3D 13<BR>link =3D 14<BR>REM SWI=20
+numbers<BR>WriteC =3D 0<BR>NewLine =3D 3<BR>ReadC =3D 4<BR>FOR pass=3D0 =
+TO 2 STEP=20
+2<BR>P%=3Dorg<BR>[ opt pass<BR>;Read characters and print the number of =
+1 bits in=20
+the<BR>;ASCII code, as long as the code isn't zero.<BR>STMFD =
+(sp)!,{link} ; Save=20
+return address<BR>.repeat<BR>BL readChar ;Get a character in R0<BR>CMP =
+R0,#0 ;Is=20
+it zero?<BR>LDMEQFD (sp)!,{PC} ;Yes, so return to caller <BR>BL process =
+;Get the=20
+count in R1<BR>BL output ;Print R1 as a digit<BR>B repeat ;Do it=20
+again<BR>;<BR>;<BR>;readChar - This returns a character in R0<BR>;All =
+other=20
+registers preserved<BR>;<BR>.readChar<BR>SWI ReadC ;Call the OS for the=20
+read<BR>MOV PC, link ;Return using R14<BR>;<BR>;process - This counts =
+the number=20
+of 1s in R0 bits 0..7<BR>;It returns the result in R1<BR>;On exit, =
+R1=3Dcount,=20
+R0=3D0, all others preserved<BR>;<BR>.process<BR>AND R0, R0, #&amp;FF =
+;Zero bits=20
+8..31 of R0<BR>MOV R1, #0 ;Init the bit count<BR>.procLoop<BR>MOVS R0, =
+R0, LSR=20
+#1 ;DIV 2 and get MOD 2 in carry<BR>ADC R1, R1, #0 ;Add carry to =
+count<BR>BNE=20
+procLoop ;More to do<BR>MOV PC, link ;Return with =
+R1=3Dcount<BR>;<BR>;output -=20
+print R1 as a single digit<BR>;On exit, R0=3DR1 + "0", all others=20
+preserved<BR>;<BR>.output<BR>ADD R0, R1,#ASC"0" ;Convert R1 to ASCII in=20
+R0<BR>SWI WriteC ;Print the digit<BR>SWI NewLine ;And a newline<BR>MOV =
+PC, link=20
+;Return<BR>]<BR>NEXT<BR>CALL org</P>
+<P class=3DMain-Paragraph>Because of the way in which the program =
+closely follows=20
+the BASIC version, you should not have much difficulty following it. =
+Here are=20
+some points to note. In the BASIC version, two of the subroutines, <SPAN =
+
+class=3Dcomputer>process</SPAN> and <SPAN =
+class=3Dcomputer>readChar</SPAN>, are=20
+functions and <SPAN class=3Dcomputer>print</SPAN> is a procedure. In the =
+ARM=20
+version, there is no such obvious distinction in the way the routines =
+are=20
+called. However, the fact that <SPAN class=3Dcomputer>process</SPAN> and =
+<SPAN=20
+class=3Dcomputer>readChar</SPAN> return values to their caller makes =
+them=20
+equivalent to function, whereas process, which returns no value of use =
+to the=20
+caller, is a procedure equivalent.</P>
+<P class=3DMain-Paragraph>At the start of each routine is a short =
+description of=20
+what it does and how it affects the registers. Such documentation is the =
+bare=20
+minimum that you should provide when writing a routine, so that problems =
+such as=20
+registers being changed unexpectedly are easier to track down. In order =
+to do=20
+this when the operating system routines are used (e.g. the <SPAN=20
+class=3Dcomputer>SWI WriteC</SPAN> call), you have to know how those =
+routines=20
+affect the registers. This information should be provided in the system=20
+documentation. For now, we assume that no registers are altered except =
+those in=20
+which results are returned, e.g. R0 in <SPAN class=3Dcomputer>SWI=20
+ReadC</SPAN>.</P>
+<P class=3DMain-Paragraph>In the routine <SPAN =
+class=3Dcomputer>process</SPAN> we=20
+use the ability to (a) set the C flag from the result of shifting an =
+<SPAN=20
+class=3Dcomputer>&lt;rhs&gt;</SPAN> operand, and (b) preserve the state =
+of the Z=20
+flag over the <SPAN class=3Dcomputer>ADC</SPAN> by not specifying the =
+<SPAN=20
+class=3Dcomputer>S</SPAN> option. This enables us to write an efficient=20
+three-instruction version of the BASIC loop.</P>
+<P class=3DMain-Paragraph>The routine <SPAN =
+class=3Dcomputer>output</SPAN> assumes=20
+that the codes of the digit symbols run contiguously from 0, 1, ...9. =
+Using this=20
+assumption it is a simple matter to convert the binary number 1..8 =
+(remember=20
+&amp;00 will never have its 1 bits counted) into the equivalent =
+printable code.=20
+As the ASCII code exhibits the desired contiguous property, and is =
+almost=20
+universally used for character representation, the assumption is a safe =
+one.</P>
+<P class=3DMain-Paragraph>As none of the routines change the link =
+register, R14,=20
+they all return using a simple move from the link register to the PC. We =
+do not=20
+bother to use <SPAN class=3Dcomputer>MOVS</SPAN> to restore the flags =
+too, as they=20
+are not expected by the main program to be preserved.</P>
+<P class=3DMain-Paragraph>If a subroutine calls another one using <SPAN=20
+class=3Dcomputer>BL</SPAN>, then the link register will be overwritten =
+with the=20
+return address for this later call. In order for the earlier routine to =
+return,=20
+it must preserve R14 before calling the second routine. As subroutines =
+very=20
+often call other routines (i.e. are 'nested'), to an arbitrary depth, =
+some way=20
+is needed of saving any number of return addresses. The most common way =
+of doing=20
+this is to save the addresses on the stack.</P>
+<P class=3DMain-Paragraph>The program fragment below shows how the link =
+register=20
+may be saved at the entry to a routine, and restored directly into the =
+PC at the=20
+exit. Using this technique, any other registers which have to be =
+preserved by=20
+the routine can be saved and restored in the same instructions:</P>
+<P class=3DProgram>;<BR>;subEg. This is an example of using the stack to =
+save=20
+<BR>;the return address of a subroutine. In addition, R0,R1<BR>;and R2 =
+are=20
+preserved.<BR>;<BR>.subEg<BR>STMFD (sp)!,{R0-R2,link};Save link and =
+R0-R2<BR>...=20
+;Do some processing<BR>...<BR>LDMFD (sp)!,{R0-R2,pc}^ ;Load PC, flags =
+and=20
+R0-R2<BR>;</P>
+<P class=3DMain-Paragraph>The standard forms of <SPAN =
+class=3Dcomputer>LDM</SPAN>=20
+and <SPAN class=3Dcomputer>STM</SPAN> are used, meaning that the stack =
+is a 'full,=20
+descending' one. Write-back is enabled on the stack pointer, since it =
+almost=20
+always will be for stacking operations, and when the PC is loaded from =
+the stack=20
+the flags are restored too, due to the <SPAN class=3Dcomputer>^</SPAN> =
+in the=20
+instruction.</P>
+<P class=3DMain-Paragraph>Note that if the only 'routines' called are =
+<SPAN=20
+class=3Dcomputer>SWI</SPAN> ones, then there is no need to save the link =
+register,=20
+R14, on the stack. Although <SPAN class=3Dcomputer>SWI</SPAN> saves the =
+PC and=20
+flags in R14, it is the supervisor mode's version of this register which =
+is=20
+used, and the user's one remains intact.</P>
+<P class=3DHeading-3>Parameter passing</P>
+<P class=3DMain-Paragraph>When values are passed to a routine, they are =
+called the=20
+parameters, or arguments, of the routine. A routine performs some =
+general task.=20
+When supplied with a particular set of arguments, it performs a more =
+specific=20
+action (it has been parameterized, if you like), and the job it performs =
+is=20
+usually the same for a particular set of arguments. When a routine =
+returns one=20
+or more values to its caller, these values are known as the results of =
+the=20
+routine.</P>
+<P class=3DMain-Paragraph>The term 'subroutine' is usually applied to a =
+primitive=20
+operation such as branch and link, which enables a section of code to be =
+called=20
+then returned from. When a well-defined method of passing parameters is =
+combined=20
+with the basic subroutine mechanism, we usually call this a procedure. =
+For=20
+example, <SPAN class=3Dcomputer>output</SPAN> in the example above is a =
+procedure=20
+which takes a number between 0 and 9 in R1 and prints the digit =
+corresponding to=20
+this. When a procedure is called in order to obtain the results it =
+returns, it=20
+is called a function.</P>
+<P class=3DMain-Paragraph>You may have heard the terms procedure and =
+function in=20
+relation to high-level languages. The concept is equally valid in =
+assembler, and=20
+when the procedures and functions of a high-level language are compiled =
+(i.e.=20
+converted to machine code or assembler) they use just the primitive =
+subroutine=20
+plus parameter passing mechanisms that we describe in this section.</P>
+<P class=3DMain-Paragraph>In the example program of the previous =
+section, the=20
+BASIC version used global variables as parameters and results, and the =
+assembler=20
+version used registers. Usually, high-level languages provide a way of =
+passing=20
+parameters more safely than using global variables. The use of globals =
+is not=20
+desirable because (a) the caller and callee have to know the name of the =
+
+variable being used and (b) global variables are prone to corruption by =
+routines=20
+which do not 'realise' they are being used elsewhere in the program.</P>
+<P class=3DMain-Paragraph>Using registers is just one of the ways in =
+which=20
+arguments and results can be passed between caller and callee. Other =
+methods=20
+include using fixed memory areas and the stack. Each method has its own=20
+advantages and drawbacks. These are described in the next few =
+sections.</P>
+<P class=3DHeading-3>Register parameters</P>
+<P class=3DMain-Paragraph>On a machine like the ARM, using the registers =
+for the=20
+communication of arguments and results is the obvious choice. Registers =
+are=20
+fairly plentiful (13 left after the PC, link and stack pointer have been =
+
+reserved), and access to them is rapid. Remember that before the ARM can =
+perform=20
+any data processing instructions, the operands must be loaded into =
+registers. It=20
+makes sense then to ensure that they are already in place when the =
+routine is=20
+called.</P>
+<P class=3DMain-Paragraph>The operating system routines that we use in =
+the=20
+examples use the registers for parameter passing. In general, registers =
+which=20
+are not used to pass results back are preserved during the routine, i.e. =
+their=20
+values are unaltered when control passes back to the caller. This is a =
+policy=20
+you should consider using when writing your own routines. If the =
+procedure=20
+itself preserves and restores the registers, there is no need for the =
+caller to=20
+do so every time it uses the routine.</P>
+<P class=3DMain-Paragraph>The main drawback of register parameters is =
+that they=20
+can only conveniently be used to hold objects up to the size of a word - =
+32-bits=20
+or four bytes. This is fine when the data consists of single characters =
+(such as=20
+the result of <SPAN class=3Dcomputer>SWI ReadC</SPAN>) and integers. =
+However,=20
+larger objects such as strings of characters or arrays of numbers cannot =
+use=20
+registers directly.</P>
+<P class=3DHeading-3>Reference parameters</P>
+<P class=3DMain-Paragraph>To overcome the problem of passing large =
+objects, we=20
+resort to a slightly different form of parameter passing. Up until now, =
+we have=20
+assumed that the contents of a register contain the value of the =
+character or=20
+integer to be passed or returned. For example, when we use the routine =
+called=20
+<SPAN class=3Dcomputer>process</SPAN> in the earlier example, R0 held =
+the value of=20
+the character to be processed, and on exit R1 contained the value of the =
+count=20
+of the number one bits. Not surprisingly, this method is called=20
+call-by-value.</P>
+<P class=3DMain-Paragraph>If instead of storing the object itself in a =
+register,=20
+we store the object's address, the size limitations of using registers =
+to pass=20
+values disappear. For example, suppose a routine requires the name of a =
+file to=20
+process. It is obviously impractical to pass an arbitrarily long string =
+using=20
+the registers, so we pass the address of where the string is stored in =
+memory=20
+instead.</P>
+<P class=3DMain-Paragraph>The example below shows how a routine called =
+<SPAN=20
+class=3Dcomputer>wrchS</SPAN> might be written and called. <SPAN=20
+class=3Dcomputer>WrchS</SPAN> takes the address of a string in R1, and =
+the length=20
+of the string in R2. It prints the string using <SPAN =
+class=3Dcomputer>SWI=20
+WriteC</SPAN>.</P>
+<P class=3DMain-Paragraph>Note that the test program obtains the address =
+in a=20
+position-independent way, using <SPAN class=3Dcomputer>ADR</SPAN>.<SPAN=20
+class=3Dcomputer> </SPAN>The first action of <SPAN =
+class=3Dcomputer>wrchS</SPAN> is=20
+to save R0 and the link register (containing the return address) onto =
+the stack.=20
+The use of stacks for holding data was mentioned in ChapterThree, and we =
+shall=20
+have more to say about them later. We save R0 because the specification =
+in the=20
+comments states that all registers except R1 and R2 are preserved. Since =
+we need=20
+to use R0 for calling <SPAN class=3Dcomputer>SWI WriteC</SPAN>, its =
+contents must=20
+be saved.</P>
+<P class=3DMain-Paragraph>The main loop of the routine is of the <SPAN=20
+class=3Dcomputer>WHILE</SPAN> variety, with the test at the top. This =
+enables it=20
+to cope with lengths of less than or equal to zero. The <SPAN=20
+class=3Dcomputer>SUBS</SPAN> has the dual effect of decreasing the =
+length count by=20
+one and setting the flags for the termination condition. An <SPAN=20
+class=3Dcomputer>LDRB</SPAN> is used to obtain the character from =
+memory, and=20
+post-indexing is used to automatically update the address in R1. </P>
+<P class=3DProgram>DIM org 200<BR>sp =3D 13<BR>link =3D 14<BR>cr =3D 13 =
+: lf =3D=20
+10<BR>WriteC =3D 0<BR>FOR pass=3D0 TO 2 STEP 2<BR>P%=3Dorg<BR>[ opt=20
+pass<BR>;<BR>;Example showing the use of =
+wrchS<BR>;<BR>.testWrchS<BR>STMFD=20
+(sp)!,{link} ;Save return address<BR>ADR R1, string ;Get address of=20
+string<BR>MOV R2,#strEnd-string ;Load string length<BR>BL wrchS ;Print=20
+it<BR>LDMFD (sp)!,{PC} ;Return<BR>;<BR>.string<BR>EQUS "Test string" =
+;The string=20
+to be printed<BR>EQUB cr<BR>EQUB lf<BR>.strEnd<BR>;<BR>;<BR>;Subroutine =
+to print=20
+a string addressed by R1<BR>;R2 contains the number of bytes in the=20
+string<BR>;On exit, R1 points the to byte after the string<BR>; R2 =
+contains=20
+-1<BR>;All other registers preserved<BR>.wrchS<BR>STMFD (sp)!, {R0,link} =
+;Save=20
+R0 and return address<BR>.wrchsLp<BR>SUBS R2, R2, #1 ;End of =
+string?<BR>LDMMIFD=20
+(sp)!, {R0,PC} ;Yes, so exit<BR>LDRB R0, [R1], #1 ;Get a char and inc =
+R1<BR>SWI=20
+WriteC ;Print this character<BR>B wrchsLp ;Next =
+char<BR>]<BR>NEXT<BR>CALL=20
+testWrchS</P>
+<P class=3DMain-Paragraph>When the <SPAN class=3Dcomputer>LDMMI</SPAN> =
+is executed=20
+we restore R0 and return to the caller, using a single instruction. If =
+we had=20
+not stored the link on the stack (as we did in the first instruction), =
+an extra=20
+<SPAN class=3Dcomputer>MOV pc,link</SPAN> would have been required to =
+return.</P>
+<P class=3DMain-Paragraph>Call-by-reference, or call-by-address is the =
+term used=20
+when parameters are passed using their addresses instead of their =
+values. When=20
+high-level languages use call-by-reference (e.g. <SPAN =
+class=3Dcomputer>var</SPAN>=20
+parameters in Pascal), there is usually a motive beyond the fact that =
+registers=20
+cannot be used to store the value. Reference parameters are used to =
+enable the=20
+called routine to alter the object whose address is passed. In effect, a =
+
+reference parameter can be used to pass a result back, and the address =
+of the=20
+result is passed to the routine in a register.</P>
+<P class=3DMain-Paragraph>To illustrate the use of reference results, we =
+present=20
+below a routine called <SPAN class=3Dcomputer>readS</SPAN>. This is =
+passed the=20
+address of an area of memory in R1. A string of characters is read from =
+the=20
+keyboard using <SPAN class=3Dcomputer>SWI ReadC</SPAN>, and stored at =
+the given=20
+address. The length of the read string is returned in R0.</P>
+<P class=3DProgram>DIM org 100, buffer 256<BR>WriteC =3D 0<BR>ReadC =3D =
+4<BR>NewLine =3D=20
+3<BR>cr =3D &amp;0D<BR>sp =3D 13<BR>link =3D 14<BR>FOR pass=3D0 TO 2 =
+STEP=20
+2<BR>P%=3Dorg<BR>[ opt pass<BR>;<BR>;readS. Reads a string from keyboard =
+to memory=20
+<BR>;addressed by R1. The string is terminated by the character =
+<BR>;&amp;0D=20
+(carriage return) On exit R0 contains the length of<BR>;the string, =
+including=20
+the CR<BR>;All other registers are preserved<BR>;<BR>.readS<BR>STMFD =
+(sp)!,=20
+{link} ;Save return address<BR>MOV R2, #0 ;Init the =
+length<BR>.readSlp<BR>SWI=20
+ReadC ;Get char in R0<BR>TEQ R0, #cr ;Was it carriage return?<BR>SWINE =
+WriteC=20
+;Echo the character if not<BR>STRB R0, [R1, R2] ;Store the char<BR>ADD =
+R2, R2,=20
+#1 ;Increment the count<BR>BNE readSlp ;If not CR, loop<BR>SWI NewLine =
+;Echo the=20
+newline<BR>MOV R0, R2 ;Return count in R0 for USR<BR>LDMFD (sp)!, {PC}=20
+;Return<BR>]<BR>NEXT<BR>B%=3Dbuffer<BR>PRINT"String: ";<BR>len%=3DUSR=20
+readS<BR>PRINT"Length was ";len%<BR>PRINT"String was "$buffer</P>
+<P class=3DMain-Paragraph>This time, a <SPAN =
+class=3Dcomputer>REPEAT</SPAN>-type=20
+loop is used because the string will always contain at least one =
+character, the=20
+carriage return. Of course, a routine such as this would not be very =
+practical=20
+to use: there is no checking for a maximum string length; no action on =
+special=20
+keys such as <SPAN class=3DBold>DELETE</SPAN> or <SPAN =
+class=3DBold>ESCAPE</SPAN> is=20
+taken. It does, however, show how a reference parameter might be used to =
+pass=20
+the address of a variable which is to be updated by the routine.</P>
+<P class=3DHeading-3>Parameter blocks</P>
+<P class=3DMain-Paragraph>A parameter block, or control block, is =
+closely related=20
+to reference parameters. When we pass a parameter block to a routine, we =
+give it=20
+the address of an area of memory in which it may find one or more =
+parameters.=20
+For example, suppose we wrote a routine to save an area of memory as a =
+named=20
+file on the disk drive. Several parameters would be required:</P>
+<UL>
+  <LI class=3DMain-Paragraph>Name of the file on the disk=20
+  <LI class=3DMain-Paragraph>Start address of data=20
+  <LI class=3DMain-Paragraph>End address (or length) of data=20
+  <LI class=3DMain-Paragraph>Load address of data=20
+  <LI class=3DMain-Paragraph>Execution address (in case it is a program) =
+
+  <LI class=3DMain-Paragraph>Attributes (read, write etc.) </LI></UL>
+<P class=3DMain-Paragraph>Now, all of these items may be passed in =
+registers. If=20
+we assume the name is passed by address and has some delimiting =
+character on the=20
+end, six registers would be required. Alternatively, the information =
+could be=20
+passed in a parameter block, the start address of which is passed in a =
+single=20
+register. The file save routine could access the component parts of the =
+block=20
+using, for example</P>
+<P class=3DMain-Paragraph><SPAN class=3Dcomputer>LDR</SPAN><SPAN =
+class=3Dcomputer>=20
+</SPAN><SPAN class=3Dcomputer>[base,#offset]</SPAN></P>
+<P class=3DMain-Paragraph>where <SPAN class=3Dcomputer>base</SPAN> is =
+the register=20
+used to pass the start address, and <SPAN class=3Dcomputer>offset</SPAN> =
+is the=20
+address of the desired word relative to <SPAN =
+class=3Dcomputer>base</SPAN>.</P>
+<P class=3DMain-Paragraph>As the address of the parameter block is =
+passed to the=20
+routine,the parameters may be altered as well as read. Thus parameter =
+blocks are=20
+effectively reference parameters which may be used to return information =
+in=20
+addition to passing it. For example, the parameter block set up for a =
+disk load=20
+operation could have its entries updated from the data stored for the =
+file in=20
+the disk catalog (load address, length etc.)</P>
+<P class=3DMain-Paragraph>Parameter blocks are perhaps less useful on =
+machines=20
+with generous register sets like the ARM than on processors which are =
+less=20
+well-endowed, e.g. 8-bit micros such as the 6502. However, you should =
+remember=20
+the advantage of only one register being needed to pass several =
+parameters, and=20
+be ready to use the technique if appropriate.</P>
+<P class=3DHeading-3>Stack parameters</P>
+<P class=3DMain-Paragraph>The final parameter passing technique which we =
+will=20
+describe uses the stack to store arguments and results. In chapter three =
+we=20
+described the <SPAN class=3Dcomputer>LDM</SPAN> and <SPAN=20
+class=3Dcomputer>STM</SPAN> instructions, for which the main use is =
+dealing with a=20
+stack-type structure. Information is pushed on to a stack using <SPAN=20
+class=3Dcomputer>STM</SPAN> and pulled from it using <SPAN=20
+class=3Dcomputer>LDM</SPAN>. We have already seen how these instructions =
+are used=20
+to preserve the return address and other registers.</P>
+<P class=3DMain-Paragraph>To pass parameters on the stack, the caller =
+must push=20
+them just before calling the routine. It must also make room for any =
+results=20
+which it expects to be returned on the stack. The example below calls a =
+routine=20
+which expects to find two arguments on the stack, and returns a single =
+result.=20
+All items are assumed to occupy a single word.</P>
+<P class=3DProgram>;<BR>;StackEg. This shows how the stack might be used =
+<BR>;to=20
+pass arguments and receive results from a stack. <BR>;Before entry, two=20
+arguments are pushed, and on exit a<BR>;single result replaces them.=20
+;<BR>.stackEg<BR>STMFD (sp)!,{R0,R1} ;Save the arguments<BR>BL stackSub =
+;Call=20
+the routine<BR>LDMFD (sp)!,{R0} ;Get the result<BR>ADD sp,sp,#8 ;'Lose' =
+the=20
+arguments<BR>...<BR>...<BR>.stackSub</P>
+<P class=3DProgram>LDMFD (sp)!,{R4,R5} ;Get the arguments<BR>... ;Do =
+some=20
+processing<BR>...<BR>STMFD (sp)!,{R2} ;Save the result<BR>MOV pc,link=20
+;Return</P>
+<P class=3DMain-Paragraph>Looking at this code, you may think to =
+yourself 'what a=20
+waste of time.' As soon as one routine pushes a value, the other pulls =
+it again.=20
+It would seem much more sensible to simply pass the values in registers =
+in the=20
+first place. Notice, though, that when <SPAN =
+class=3Dcomputer>stackSub</SPAN> is=20
+called, the registers used to set-up the stack are different from those =
+which=20
+are loaded inside the routine. This is one of the advantages of stacked=20
+parameters: all the caller and callee need to know is the size, number =
+and order=20
+of the parameters, not (explicitly) where they are stored.</P>
+<P class=3DMain-Paragraph>In practice, it is rare to find the stack =
+being used for=20
+parameter passing by pure assembly language programs, as it is =
+straightforward=20
+to allocate particular registers. Where the stack scheme finds more use =
+is in=20
+compiled high-level language procedures. Some languages, such as C, =
+allow the=20
+programmer to assume that the arguments to a procedure can be accessed =
+in=20
+contiguous memory locations. Moreover, many high-level languages allow =
+recursive=20
+procedures, i.e. procedures which call themselves. Since a copy of the=20
+parameters is required for each invocation of a procedure, the stack is =
+an=20
+obvious place to store them. See the Acorn ARM Calling Standard for an=20
+explanation of how high-level languages use the stack.</P>
+<P class=3DMain-Paragraph>Although the stack is not often used to pass =
+parameters=20
+in assembly language programs, subroutines frequently save registers in =
+order to=20
+preserve their values across calls to the routine. We have already seen =
+how the=20
+link register (and possibly others) may be saved using <SPAN=20
+class=3Dcomputer>STM</SPAN> at the start of a procedure, and restored by =
+<SPAN=20
+class=3Dcomputer>LDM</SPAN> at the exit. To further illustrate this =
+technique, the=20
+program below shows how a recursive procedure might use the stack to =
+store=20
+parameters across invocations.</P>
+<P class=3DMain-Paragraph>The technique illustrated is very similar to =
+the way=20
+parameters (and local variables) work in BBC BASIC. All variables are =
+actually=20
+global. When a procedure with the first line</P>
+<P class=3DProgram>DEF PROCeg(int%)</P>
+<P class=3DMain-Paragraph>is called using the statement <SPAN=20
+class=3Dcomputer>PROCeg(42)</SPAN>, the following happens. The value of =
+<SPAN=20
+class=3Dcomputer>int%</SPAN> is saved on the stack. Then <SPAN=20
+class=3Dcomputer>int%</SPAN> is assigned the value 42, and this is the =
+value it=20
+has throughout the procedure. When the procedure returns using <SPAN=20
+class=3Dcomputer>ENDPROC</SPAN>, the previous value of <SPAN=20
+class=3Dcomputer>int%</SPAN> is pulled from the stack, restoring its old =
+
+value.</P>
+<P class=3DMain-Paragraph>The assembly language equivalent of this =
+method is to=20
+pass parameters in registers. Just before a subroutine is called, =
+registers=20
+which have to be preserved across the call are pushed, and then the =
+parameter=20
+registers are set-up. When the routine exits, the saved registers are =
+pulled=20
+from the stack.</P>
+<P class=3DMain-Paragraph>There are several routines which are commonly =
+used to=20
+illustrate recursion. The one used here is suitable because of its =
+simplicity;=20
+the problem to be solved does not get in the way of showing how =
+recursion is=20
+used. The Fibonacci sequence is a series of numbers thus:</P>
+<P class=3DMain-Paragraph>0, 1, 1, 2, 3, 5, 8, 13, 21, 34, ...</P>
+<P class=3DMain-Paragraph>where each number is the sum of its two =
+predecessors. It=20
+can be expressed mathematically in terms of some functions:</P>
+<P class=3DMain-Paragraph>f(0) =3D 0</P>
+<P class=3DMain-Paragraph>f(1) =3D 1</P>
+<P class=3DMain-Paragraph>f(n) =3D f(n-2) + f(n-1)</P>
+<P class=3DMain-Paragraph>where f(n) means the nth number in the =
+sequence starting=20
+from zero. It can easily be translated into a BASIC function:</P>
+<P class=3DProgram>DEF FNfib(n) IF n&lt;=3D1 THEN =3Dn ELSE =
+=3DFNfib(n-2)+FNfib(n-1)</P>
+<P class=3DMain-Paragraph>To convert this into ARM assembler, we will =
+assume that=20
+the number <SPAN class=3Dcomputer>n</SPAN> is passed in R1 and the =
+result=20
+fib(<SPAN class=3Dcomputer>n</SPAN>) returned in R0.</P>
+<P class=3DProgram>DIM org 200<BR>link=3D14<BR>sp=3D13<BR>FOR pass=3D0 =
+TO 2 STEP=20
+2P%=3Dorg<BR>[ opt pass<BR>;Fibonacci routine to return fib(n)<BR>;On =
+entry, R1=20
+contains n<BR>;On exit, R0 contains fib(n), R1 preserved, R2=20
+corrupt<BR>;<BR>.fib<BR>CMP R1,#1 ;See if it's an easy case<BR>MOVLE =
+R0,R1 ;Yes,=20
+so return it in R0<BR>MOVLE PC,link ;And return<BR>STMFD (sp)!,{link} =
+;Save=20
+return address<BR>SUB R1,R1,#2 ;Get fib(n-2) in R0<BR>BL fib<BR>STMFD =
+(sp)!,{R0}=20
+;Save it on the stack<BR>ADD R1,R1,#1 ;Get fib(n-1) in R0<BR>BL =
+fib<BR>LDMFD=20
+(sp)!,{R2} ;Pull fib(n-2)<BR>ADD R0,R0,R2 ;Add fib(n-2) and fib(n-1) in=20
+R0<BR>ADD R1,R1,#1 ;Restore R1 to entry value<BR>LDMFD (sp)!,{PC}=20
+;Return<BR>]<BR>NEXTFOR B%=3D0 TO 25<BR>PRINT "Fib(";B%") is ";USR =
+fib<BR>NEXT=20
+B%</P>
+<P class=3DMain-Paragraph>The routine does not use the stack in exactly =
+the same=20
+way as BBC BASIC, but the saving of intermediate results on the stack =
+enables=20
+<SPAN class=3Dcomputer>fib</SPAN> to be called recursively in the same =
+way. Note=20
+that it is important that on return R1 is preserved, i.e. contains <SPAN =
+
+class=3Dcomputer>n</SPAN>, as specified in the comments. This is because =
+whenever=20
+<SPAN class=3Dcomputer>fib</SPAN> is called recursively the caller =
+expects R1 to=20
+be left intact so that it can calculate the next value correctly. In the =
+cases=20
+when R1=3D0 or 1 on entry it is clearly preserved; in the other cases, =
+by=20
+observation R1 is changed by -2, +1 and +1, i.e. there is no net change =
+in its=20
+value.</P>
+<P class=3DMain-Paragraph>You should note that, like a lot of routines =
+that are=20
+expressed elegantly using recursion, this Fibonacci program becomes very =
+
+inefficient of time and stack space for quite small values of <SPAN=20
+class=3Dcomputer>n</SPAN>. This is due to the number of recursive calls =
+made. (For=20
+an exercise you could draw a 'tree' of the calls for some start value, =
+say 6.) A=20
+better solution is a counting loop. This is expressed in BASIC and ARM =
+assembler=20
+below.</P>
+<P class=3DProgram>DEF FNfib(n)<BR>IF n &lt;=3D 1 THEN =3Dn<BR>LOCAL =
+f1,f2<BR>f2=3D0 :=20
+f1 =3D 1<BR>FOR i=3D0 TO n-2<BR>f1 =3D f1+f2<BR>f2 =3D f1-f2<BR>NEXT =
+i<BR>=3D f1<BR>DIM=20
+org 200<BR>i =3D 2 : REM Work registers<BR>f1 =3D 3<BR>f2 =3D 4<BR>sp =
+=3D 13<BR>link =3D=20
+14<BR>FOR pass=3D0 TO 2 STEP 2<BR>P%=3Dorg<BR>[ opt pass<BR>;fib - using =
+iteration=20
+instead of recursion<BR>;On entry, R1 =3D n<BR>;On exit, R0 =3D=20
+fib(n)<BR>;<BR>.fib<BR>CMP R1,#1 ;Trivial test first<BR>MOVLE =
+R0,R1<BR>MOVLE=20
+PC,link<BR>STMFD (sp)!,{i,f1,f2,link} ;Save work registers and =
+link<BR>MOV f1,#1=20
+;Initialise fib(n-1)<BR>MOV f2,#0 ;and fib(n-2)<BR>SUB i,R1,#2 ;Set-up =
+loop=20
+count<BR>.fibLp<BR>ADD f1,f1,f2 ;Do calculation<BR>SUB f2,f1,f2<BR>SUBS=20
+i,i,#1<BR>BPL fibLp ;Until i reaches -1<BR>MOV R0,f1 ;Return result in=20
+R0<BR>LDMFD (sp)!,{i,f1,f2,PC};Restore and return<BR>NEXT pass<BR>FOR =
+B%=3D0 TO=20
+25<BR>PRINT"Fib(";B%;") is ";USR fib<BR>NEXT B%</P>
+<P class=3DHeading-3>Summary</P>
+<P class=3DMain-Paragraph>The main thrust of this chapter has been to =
+show how=20
+some of the familiar concepts of high-level languages can be applied to=20
+assembler. Most control structures are easily implemented in terms of =
+branches,=20
+though more complex ones (such as multi-way branching) can require =
+slightly more=20
+work. This is especially true if the code is to exhibit the desirable =
+property=20
+of position-indepence.</P>
+<P class=3DMain-Paragraph>We also saw how parameters may be passed =
+between=20
+routines - in registers, on the stack, or in parameter blocks. Using the =
+stack=20
+has the advantage of allowing recursion, but is less efficient than =
+passing=20
+information in registers.</P>
+<P class=3DMain-Paragraph></P></BODY></HTML>
+
+------=_NextPart_000_001A_01CD473A.CE244090
+Content-Type: image/jpeg
+Content-Transfer-Encoding: base64
+Content-Location: http://www.peter-cockerell.net/aalp/html/images/fig5-1-hi.jpg
+
+/9j/4AAQSkZJRgABAgEBLAEsAAD/7QzAUGhvdG9zaG9wIDMuMAA4QklNA+0AAAAAABABLAAAAAEA
+AQEsAAAAAQABOEJJTQQNAAAAAAAEAAAAHjhCSU0EGQAAAAAABAAAAB44QklNA/MAAAAAAAkAAAAA
+AAAAAAEAOEJJTQQKAAAAAAABAAA4QklNJxAAAAAAAAoAAQAAAAAAAAACOEJJTQP1AAAAAABIAC9m
+ZgABAGxmZgAGAAAAAAABAC9mZgABAKGZmgAGAAAAAAABADIAAAABAFoAAAAGAAAAAAABADUAAAAB
+AC0AAAAGAAAAAAABOEJJTQP4AAAAAABwAAD/////////////////////////////A+gAAAAA////
+/////////////////////////wPoAAAAAP////////////////////////////8D6AAAAAD/////
+////////////////////////A+gAADhCSU0ECAAAAAAAEAAAAAEAAAJAAAACQAAAAAA4QklNBB4A
+AAAAAAQAAAAAOEJJTQQaAAAAAABzAAAABgAAAAAAAAAAAAACEgAAAeAAAAAJAGYAaQBnADUALQAx
+AC0AaABpAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAHgAAACEgAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4QklNBBQAAAAAAAQAAAACOEJJTQQMAAAAAAosAAAAAQAA
+AGUAAABwAAABMAAAhQAAAAoQABgAAf/Y/+AAEEpGSUYAAQIBAEgASAAA/+4ADkFkb2JlAGSAAAAA
+Af/bAIQADAgICAkIDAkJDBELCgsRFQ8MDA8VGBMTFRMTGBEMDAwMDAwRDAwMDAwMDAwMDAwMDAwM
+DAwMDAwMDAwMDAwMDAENCwsNDg0QDg4QFA4ODhQUDg4ODhQRDAwMDAwREQwMDAwMDBEMDAwMDAwM
+DAwMDAwMDAwMDAwMDAwMDAwMDAwM/8AAEQgAcABlAwEiAAIRAQMRAf/dAAQAB//EAT8AAAEFAQEB
+AQEBAAAAAAAAAAMAAQIEBQYHCAkKCwEAAQUBAQEBAQEAAAAAAAAAAQACAwQFBgcICQoLEAABBAED
+AgQCBQcGCAUDDDMBAAIRAwQhEjEFQVFhEyJxgTIGFJGhsUIjJBVSwWIzNHKC0UMHJZJT8OHxY3M1
+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
+Q29weXJpZ2h0IChjKSAxOTk4IEhld2xldHQtUGFja2FyZCBDb21wYW55AABkZXNjAAAAAAAAABJz
+UkdCIElFQzYxOTY2LTIuMQAAAAAAAAAAAAAAEnNSR0IgSUVDNjE5NjYtMi4xAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABYWVogAAAAAAAA81EAAQAAAAEW
+zFhZWiAAAAAAAAAAAAAAAAAAAAAAWFlaIAAAAAAAAG+iAAA49QAAA5BYWVogAAAAAAAAYpkAALeF
+AAAY2lhZWiAAAAAAAAAkoAAAD4QAALbPZGVzYwAAAAAAAAAWSUVDIGh0dHA6Ly93d3cuaWVjLmNo
+AAAAAAAAAAAAAAAWSUVDIGh0dHA6Ly93d3cuaWVjLmNoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAGRlc2MAAAAAAAAALklFQyA2MTk2Ni0yLjEgRGVmYXVsdCBS
+R0IgY29sb3VyIHNwYWNlIC0gc1JHQgAAAAAAAAAAAAAALklFQyA2MTk2Ni0yLjEgRGVmYXVsdCBS
+R0IgY29sb3VyIHNwYWNlIC0gc1JHQgAAAAAAAAAAAAAAAAAAAAAAAAAAAABkZXNjAAAAAAAAACxS
+ZWZlcmVuY2UgVmlld2luZyBDb25kaXRpb24gaW4gSUVDNjE5NjYtMi4xAAAAAAAAAAAAAAAsUmVm
+ZXJlbmNlIFZpZXdpbmcgQ29uZGl0aW9uIGluIElFQzYxOTY2LTIuMQAAAAAAAAAAAAAAAAAAAAAA
+AAAAAAAAAAAAdmlldwAAAAAAE6T+ABRfLgAQzxQAA+3MAAQTCwADXJ4AAAABWFlaIAAAAAAATAlW
+AFAAAABXH+dtZWFzAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAACjwAAAAJzaWcgAAAAAENSVCBj
+dXJ2AAAAAAAABAAAAAAFAAoADwAUABkAHgAjACgALQAyADcAOwBAAEUASgBPAFQAWQBeAGMAaABt
+AHIAdwB8AIEAhgCLAJAAlQCaAJ8ApACpAK4AsgC3ALwAwQDGAMsA0ADVANsA4ADlAOsA8AD2APsB
+AQEHAQ0BEwEZAR8BJQErATIBOAE+AUUBTAFSAVkBYAFnAW4BdQF8AYMBiwGSAZoBoQGpAbEBuQHB
+AckB0QHZAeEB6QHyAfoCAwIMAhQCHQImAi8COAJBAksCVAJdAmcCcQJ6AoQCjgKYAqICrAK2AsEC
+ywLVAuAC6wL1AwADCwMWAyEDLQM4A0MDTwNaA2YDcgN+A4oDlgOiA64DugPHA9MD4APsA/kEBgQT
+BCAELQQ7BEgEVQRjBHEEfgSMBJoEqAS2BMQE0wThBPAE/gUNBRwFKwU6BUkFWAVnBXcFhgWWBaYF
+tQXFBdUF5QX2BgYGFgYnBjcGSAZZBmoGewaMBp0GrwbABtEG4wb1BwcHGQcrBz0HTwdhB3QHhgeZ
+B6wHvwfSB+UH+AgLCB8IMghGCFoIbgiCCJYIqgi+CNII5wj7CRAJJQk6CU8JZAl5CY8JpAm6Cc8J
+5Qn7ChEKJwo9ClQKagqBCpgKrgrFCtwK8wsLCyILOQtRC2kLgAuYC7ALyAvhC/kMEgwqDEMMXAx1
+DI4MpwzADNkM8w0NDSYNQA1aDXQNjg2pDcMN3g34DhMOLg5JDmQOfw6bDrYO0g7uDwkPJQ9BD14P
+eg+WD7MPzw/sEAkQJhBDEGEQfhCbELkQ1xD1ERMRMRFPEW0RjBGqEckR6BIHEiYSRRJkEoQSoxLD
+EuMTAxMjE0MTYxODE6QTxRPlFAYUJxRJFGoUixStFM4U8BUSFTQVVhV4FZsVvRXgFgMWJhZJFmwW
+jxayFtYW+hcdF0EXZReJF64X0hf3GBsYQBhlGIoYrxjVGPoZIBlFGWsZkRm3Gd0aBBoqGlEadxqe
+GsUa7BsUGzsbYxuKG7Ib2hwCHCocUhx7HKMczBz1HR4dRx1wHZkdwx3sHhYeQB5qHpQevh7pHxMf
+Ph9pH5Qfvx/qIBUgQSBsIJggxCDwIRwhSCF1IaEhziH7IiciVSKCIq8i3SMKIzgjZiOUI8Ij8CQf
+JE0kfCSrJNolCSU4JWgllyXHJfcmJyZXJocmtyboJxgnSSd6J6sn3CgNKD8ocSiiKNQpBik4KWsp
+nSnQKgIqNSpoKpsqzysCKzYraSudK9EsBSw5LG4soizXLQwtQS12Last4S4WLkwugi63Lu4vJC9a
+L5Evxy/+MDUwbDCkMNsxEjFKMYIxujHyMioyYzKbMtQzDTNGM38zuDPxNCs0ZTSeNNg1EzVNNYc1
+wjX9Njc2cjauNuk3JDdgN5w31zgUOFA4jDjIOQU5Qjl/Obw5+To2OnQ6sjrvOy07azuqO+g8Jzxl
+PKQ84z0iPWE9oT3gPiA+YD6gPuA/IT9hP6I/4kAjQGRApkDnQSlBakGsQe5CMEJyQrVC90M6Q31D
+wEQDREdEikTORRJFVUWaRd5GIkZnRqtG8Ec1R3tHwEgFSEtIkUjXSR1JY0mpSfBKN0p9SsRLDEtT
+S5pL4kwqTHJMuk0CTUpNk03cTiVObk63TwBPSU+TT91QJ1BxULtRBlFQUZtR5lIxUnxSx1MTU19T
+qlP2VEJUj1TbVShVdVXCVg9WXFapVvdXRFeSV+BYL1h9WMtZGllpWbhaB1pWWqZa9VtFW5Vb5Vw1
+XIZc1l0nXXhdyV4aXmxevV8PX2Ffs2AFYFdgqmD8YU9homH1YklinGLwY0Njl2PrZEBklGTpZT1l
+kmXnZj1mkmboZz1nk2fpaD9olmjsaUNpmmnxakhqn2r3a09rp2v/bFdsr20IbWBtuW4SbmtuxG8e
+b3hv0XArcIZw4HE6cZVx8HJLcqZzAXNdc7h0FHRwdMx1KHWFdeF2Pnabdvh3VnezeBF4bnjMeSp5
+iXnnekZ6pXsEe2N7wnwhfIF84X1BfaF+AX5ifsJ/I3+Ef+WAR4CogQqBa4HNgjCCkoL0g1eDuoQd
+hICE44VHhauGDoZyhteHO4efiASIaYjOiTOJmYn+imSKyoswi5aL/IxjjMqNMY2Yjf+OZo7OjzaP
+npAGkG6Q1pE/kaiSEZJ6kuOTTZO2lCCUipT0lV+VyZY0lp+XCpd1l+CYTJi4mSSZkJn8mmia1ZtC
+m6+cHJyJnPedZJ3SnkCerp8dn4uf+qBpoNihR6G2oiailqMGo3aj5qRWpMelOKWpphqmi6b9p26n
+4KhSqMSpN6mpqhyqj6sCq3Wr6axcrNCtRK24ri2uoa8Wr4uwALB1sOqxYLHWskuywrM4s660JbSc
+tRO1irYBtnm28Ldot+C4WbjRuUq5wro7urW7LrunvCG8m70VvY++Cr6Evv+/er/1wHDA7MFnwePC
+X8Lbw1jD1MRRxM7FS8XIxkbGw8dBx7/IPci8yTrJuco4yrfLNsu2zDXMtc01zbXONs62zzfPuNA5
+0LrRPNG+0j/SwdNE08bUSdTL1U7V0dZV1tjXXNfg2GTY6Nls2fHadtr724DcBdyK3RDdlt4c3qLf
+Kd+v4DbgveFE4cziU+Lb42Pj6+Rz5PzlhOYN5pbnH+ep6DLovOlG6dDqW+rl63Dr++yG7RHtnO4o
+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
+viaKi4M6Omg1huJkZQozMdST3lVsRz/6D//Z
+
+------=_NextPart_000_001A_01CD473A.CE244090
+Content-Type: text/css;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Content-Location: http://www.peter-cockerell.net/aalp/html/aalp.css
+
+UNKNOWN {
+	FONT-FAMILY: "Century Schoolbook"; FONT-SIZE: 10pt
+}
+P.Heading-1 {
+	FONT-FAMILY: sans-serif; FONT-SIZE: 18pt; FONT-WEIGHT: bold
+}
+P.Heading-2 {
+	FONT-FAMILY: sans-serif; FONT-SIZE: 14pt; FONT-WEIGHT: bold
+}
+P.Heading-3 {
+	FONT-FAMILY: sans-serif; FONT-SIZE: 12pt; FONT-WEIGHT: bold
+}
+P.Heading-4 {
+	FONT-STYLE: italic; FONT-SIZE: 12pt
+}
+P.Main-Paragraph {
+=09
+}
+P.Paragraph-no-space {
+	MARGIN: 0in 0in 0pt
+}
+.Program {
+	FONT-FAMILY: monospace; WHITE-SPACE: pre; FONT-SIZE: 10pt; FONT-WEIGHT: =
+bold
+}
+.Program-light {
+	FONT-FAMILY: monospace; WHITE-SPACE: pre; FONT-SIZE: 10pt
+}
+SPAN.Bold {
+	FONT-WEIGHT: bold
+}
+SPAN.computer {
+	FONT-FAMILY: monospace; FONT-SIZE: 10pt; FONT-WEIGHT: bold
+}
+SPAN.H {
+	FONT-SIZE: 75%; VERTICAL-ALIGN: super
+}
+SPAN.Italic {
+	FONT-STYLE: italic
+}
+TD.is-grid-bit {
+	FONT-FAMILY: sans-serif; FONT-SIZE: 8pt; FONT-WEIGHT: bold
+}
+TD.is-grid-label {
+	FONT-FAMILY: sans-serif; FONT-SIZE: 10pt; FONT-WEIGHT: bold
+}
+
+------=_NextPart_000_001A_01CD473A.CE244090--

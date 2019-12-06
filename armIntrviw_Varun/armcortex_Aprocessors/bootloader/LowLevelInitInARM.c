@@ -8,7 +8,7 @@ void low_level_init(void (*reset_addr)(), void (*return_addr)())
   AT91PS_PMC pPMC;
   /* Set flash wait sate FWS and FMCN */
   AT91C_BASE_MC->MC_FMR = ( (AT91C_MC_FMCN) & ( (MCK + 500000) / 1000000 << 16))
-      | AT91C_MC_FWS_1FWS;
+                                                          | AT91C_MC_FWS_1FWS;
   AT91C_BASE_WDTC->WDTC_WDMR = AT91C_WDTC_WDDIS; /* Disable the watchdog */
   /* Enable the Main Oscillator */. . .
   /* Set the PLL and Divider and wait for PLL stabilization */. . .
@@ -19,12 +19,12 @@ void low_level_init(void (*reset_addr)(), void (*return_addr)())
    * during the remap operation.
    */
   /* setup the primary vector table in RAM */
-  *(uint32_t volatile *)(&__ram_start + 0x00) = (LDR_PC_PC | 0x18);
+  *(uint32_t volatile *)(&__ram_start + 0x00)  = (LDR_PC_PC | 0x18);
   *(uint32_t volatile *) (&__ram_start + 0x04) = (LDR_PC_PC | 0x18);
   *(uint32_t volatile *) (&__ram_start + 0x08) = (LDR_PC_PC | 0x18);
   *(uint32_t volatile *) (&__ram_start + 0x0C) = (LDR_PC_PC | 0x18);
   *(uint32_t volatile *) (&__ram_start + 0x10) = (LDR_PC_PC | 0x18);
-  * (uint32_t volatile *) (&__ram_start + 0x14) = MAGIC;
+  *(uint32_t volatile *) (&__ram_start + 0x14) = MAGIC;
   *(uint32_t volatile *) (&__ram_start + 0x18) = (LDR_PC_PC | 0x18);
   *(uint32_t volatile *) (&__ram_start + 0x1C) = (LDR_PC_PC | 0x18);
   /* setup the secondary vector table in RAM */

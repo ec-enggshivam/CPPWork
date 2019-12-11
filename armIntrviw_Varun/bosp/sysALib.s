@@ -420,29 +420,26 @@ write_clock:
 	
 
 	/* Make sure Boot type is set correctly. visionClick doesn't */
-
 	mov	r1,#BOOT_NORMAL
-        cmp	r1,r0
+  cmp	r1,r0
 	beq	L$_Good_Boot
 
 	mov	r1,#BOOT_NO_AUTOBOOT
-        cmp	r1,r0
+  cmp	r1,r0
 	beq	L$_Good_Boot
 
 	mov	r1,#BOOT_CLEAR
-        cmp	r1,r0
+  cmp	r1,r0
 	beq	L$_Good_Boot
 
 	mov	r1,#BOOT_QUICK_AUTOBOOT
         cmp	r1,r0
 	beq	L$_Good_Boot
 
-        mov     r0, #BOOT_NORMAL /* default startType */
+  mov r0, #BOOT_NORMAL /* default startType */
 
 L$_Good_Boot:
-
 	/* now call usrInit (startType) */
-
 #if	(ARM_THUMB)
 	LDR	r12, L$_usrInit
 	BX	r12
@@ -504,7 +501,6 @@ _ARM_FUNCTION_CALLED_FROM_C(sysIntStackSplit)
 	 * r0 = base of space allocated for stacks (i.e. highest address)
 	 * r1 = size of space
 	 */
-
 	SUB	r2, r0, r1			/* r2->lowest usable address */
 	LDR	r3, L$_vxSvcIntStackEnd
 	STR	r2, [r3]			/*  == end of SVC-mode stack */
@@ -578,9 +574,9 @@ _ARM_FUNCTION_CALLED_FROM_C(archPwrDown)
 
 /* (REC) test code */
 #else
-#ifdef POWER_MGT_INSTRUMENT
-_ARM_FUNCTION_CALLED_FROM_C(archPwrDown)
- foreverLoop:    /* test code */
+  #ifdef POWER_MGT_INSTRUMENT
+    _ARM_FUNCTION_CALLED_FROM_C(archPwrDown)
+  foreverLoop:    /* test code */
         B     foreverLoop
 #endif /* POWER_MGT_INSTRUMENT */
 

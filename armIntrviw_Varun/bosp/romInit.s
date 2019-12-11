@@ -554,11 +554,9 @@ sdram4:
 	BNE	sdram5		/* If it doesn't then something has gone wrong*/
 
 	/* Load base address of header registers */
-
 	LDR	r2, =INTEGRATOR_HDR_BASE
 
 	/* Load contents of HDR_SDRAM */
-
 	LDR	r3, [r2, #INTEGRATOR_HDR_SDRAM_OFFSET]
 	AND	r3, r3, #3	/* Clear the everything except CASLAT */
 	SUBS	r1, r1, #4	/* Subtract 4 from the number of trailing bits*/
@@ -579,7 +577,6 @@ sdram4:
 	ORR	r3, r3, r1, LSL #16	/* Merge into HDR_SDRAM */
 
 	/* Write back to HDR_SDRAM */
-
 	STR	r3, [r2, #INTEGRATOR_HDR_SDRAM_OFFSET]
 
 	/*
@@ -601,7 +598,6 @@ sdram5:
 	
 sdram6:
 	/* Load base address of header registers */
-
 	LDR	r2, =INTEGRATOR_HDR_BASE
 
 	/* Load contents of HDR_STAT */
@@ -609,17 +605,14 @@ sdram6:
 	LDR	r2, [r2, #INTEGRATOR_HDR_STAT_OFFSET]
 
 	/* Clear all but bits 23:16 to get SSRAM size */
-
 	ANDS	r2, r2, #0xFF0000
 
 	/* If zero then this is a old header with 256K */
-
 	MOVEQ	r2, #0x00040000
 	CMP	r1, r2		/* Is there less SDRAM than the SSRAM */
 	MOVMI	r1, r2		/* If so then return the size of the SSRAM */
 
 	/* r1 now contains memory size: store this in Memory_Size variable */
-
 	LDR	r3, L$_memSize
 	STR	r1, [r3]
 
